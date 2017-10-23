@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+
+<resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.3.0.1">
+
+<object class="wxMenuBar" name="mainmenu">
+
+  <object class="wxMenu" name="file_menu">
+    <label>_File</label>
+
+    <object class="wxMenuItem" name="new_database">
+      <label>_New database</label>
+    </object>
+    <object class="wxMenuItem" name="open_database">
+      <label>_Open database\tCtrl-O</label>
+    </object>
+
+    <object class="wxMenuItem" name="wxID_SEPARATOR" />
+
+    <!-- we use wxID_EXIT name here to get the default menu item stock icon -->
+    <object class="wxMenuItem" name="wxID_EXIT">
+      <label>E_xit\tCtrl-Q</label>
+    </object>
+  </object>
+
+  <object class="wxMenu" name="database_menu">
+    <label>_Database</label>
+    <object class="wxMenuItem" name="close_database">
+      <label>_Close database\tCtrl-W</label>
+      <enabled>0</enabled>
+    </object>
+    <object class="wxMenuItem" name="wxID_SEPARATOR" />
+    <object class="wxMenuItem" name="export_pgn">
+      <label>_Export to PGN</label>
+    </object>
+    <object class="wxMenuItem" name="import_pgn">
+      <label>_Import from PGN</label>
+    </object>
+    <object class="wxMenuItem" name="wxID_SEPARATOR" />
+    <object class="wxMenuItem" name="close_database">
+      <label>_Maintenance window\tCtrl-M</label>
+      <enabled>0</enabled>
+    </object>
+    <object class="wxMenuItem" name="wxID_SEPARATOR" />
+  </object>
+
+  <object class="wxMenu" name="edit_menu">
+    <label>_Edit</label>
+    <object class="wxMenuItem" name="undo">
+      <label>_Undo\tCtrl-z</label>
+      <enabled>0</enabled>
+    </object>
+    <object class="wxMenuItem" name="redo">
+      <label>_Redo\tCtrl-y</label>
+      <enabled>0</enabled>
+    </object>
+    <object class="wxMenuItem" name="wxID_SEPARATOR" />
+    <object class="wxMenuItem" name="setup_position">
+      <label>_Set up position\tS</label>
+    </object>
+    <object class="wxMenuItem" name="copy_position">
+      <label>_Copy position as FEN string\tCtrl-C</label>
+    </object>
+    <object class="wxMenuItem" name="paste_position">
+      <label>_Paste position as FEN string\tCtrl-V</label>
+    </object>
+    <object class="wxMenuItem" name="wxID_SEPARATOR" />
+    <object class="wxMenuItem" name="copy_game">
+      <label>Copy game as PGN\tCtrl-Shift-C</label>
+    </object>
+    <object class="wxMenuItem" name="paste_game">
+      <label>Paste game as PGN\tCtrl-Shift-V</label>
+    </object>
+    <object class="wxMenuItem" name="wxID_SEPARATOR" />
+    <object class="wxMenuItem" name="edit_preferences">
+      <label>Preferences\tCtrl-P</label>
+    </object>
+  </object>
+
+  <object class="wxMenu" name="game_menu">
+    <label>_Game</label>
+    <object class="wxMenuItem" name="new_game">
+      <label>_New game\tCtrl-N</label>
+    </object>
+    <object class="wxMenuItem" name="reload_game">
+      <label>_Reload game</label>
+    </object>
+    <object class="wxMenuItem" name="save_game">
+      <label>_Save game\tCtrl-S</label>
+    </object>
+    <object class="wxMenuItem" name="export_game_to_pgn">
+      <label>_Export game to PGN</label>
+    </object>
+    <object class="wxMenuItem" name="wxID_SEPARATOR" />
+    <object class="wxMenuItem" name="load_first_game">
+      <label>Load _First game\tCtrl-Shift-Up</label>
+    </object>
+    <object class="wxMenuItem" name="load_previous_game">
+      <label>Load _Previous game\tCtrl-Up</label>
+    </object>
+    <object class="wxMenuItem" name="load_next_game">
+      <label>Load Ne_xt game\tCtrl-Down</label>
+    </object>
+    <object class="wxMenuItem" name="load_last_game">
+      <label>Load _Last game\tCtrl-Shift-Down</label>
+    </object>
+  </object>
+  <object class="wxMenu" name="search_menu">
+    <label>_Search</label>
+    <object class="wxMenuItem" name="open_search_position_dialog">
+      <label>Current position</label>
+    </object>
+    <object class="wxMenuItem" name="open_search_header_dialog">
+      <label>Header</label>
+    </object>
+    <object class="wxMenuItem" name="open_search_material_dialog">
+      <label>Material/Pattern</label>
+    </object>
+  </object>
+  <object class="wxMenu" name="tools_menu">
+    <label>_Tools</label>
+    <object class="wxMenuItem" name="open_engines_dialog">
+      <label>_Engine analysis\tF2</label>
+    </object>
+  </object>
+
+  <object class="wxMenu" name="help_menu">
+    <label>_Help</label>
+    <!-- we use wxID_ABOUT name here to get the default menu item stock icon -->
+    <object class="wxMenuItem" name="wxID_ABOUT">
+      <label>_About</label>
+      <help>About this application</help>
+    </object>
+  </object>
+
+</object>
+
+</resource>
