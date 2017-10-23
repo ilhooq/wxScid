@@ -44,7 +44,11 @@ private:
   wxDECLARE_EVENT_TABLE();
 
 protected:
-  ChessBoard board;
+  ChessBoard* board;
+  wxPanel* gamesList;
+  wxPanel* moveTree;
+  wxPanel* boardPanel;
+  wxPanel* gameViewer;
 };
 
 #endif /* MAINFRAME_H_ */

@@ -25,95 +25,119 @@ MainFrame::MainFrame(
   const wxString& title,
   const wxPoint& pos,
   const wxSize& size,
-  long style) : wxFrame(parent, id, title, pos, size, style),
-board(this, App::getDataDir() + "/themes")
+  long style) : wxFrame(parent, id, title, pos, size, style)
 {
   wxString dataDir = App::getDataDir();
 
   // Set frame icon
   SetIcon(wxIcon(dataDir + "/icons/scid.ico"));
 
-
-  // Load the menubar from XRC.
+  // Load the menubar from XRC
   SetMenuBar(wxXmlResource::Get()->LoadMenuBar(wxT("mainmenu")));
 
   // Tell wxAuiManager to manage this frame
   auiManager.SetManagedWindow(this);
 
-  // wxBoxSizer* box = new wxBoxSizer(wxVERTICAL);
-
-
-  board.addPiece(ChessBoard::wRook, a1);
-  board.addPiece(ChessBoard::wKing, e1);
-
+  // Toolbar
   // prepare a few custom overflow elements for the toolbars' overflow buttons
-
   wxAuiToolBarItemArray prepend_items;
   wxAuiToolBarItemArray append_items;
   wxAuiToolBarItem item;
+
   item.SetKind(wxITEM_SEPARATOR);
   append_items.Add(item);
+
   item.SetKind(wxITEM_NORMAL);
   item.SetId(ID_CustomizeToolbar);
   item.SetLabel(_("Customize..."));
   append_items.Add(item);
 
-  wxAuiToolBar* tb2 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+  wxAuiToolBar* toolbar = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
       wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW | wxAUI_TB_HORIZONTAL);
-  tb2->SetToolBitmapSize(wxSize(16, 16));
+  toolbar->SetToolBitmapSize(wxSize(48, 48));
 
-  wxBitmap tb2_bmp1 = wxArtProvider::GetBitmap(wxART_QUESTION, wxART_OTHER, wxSize(16, 16));
+  wxBitmap toolbar_bmp1 = wxArtProvider::GetBitmap(wxART_QUESTION, wxART_OTHER, wxSize(16, 16));
   wxBitmap flip_bmp = wxImage(dataDir + "/icons/flip.png");
 
-  tb2->AddTool(ID_Toolbar + 1, wxT("Disabled"), tb2_bmp1);
-  tb2->AddTool(ID_FLIPBOARD, wxT("Flip board"), flip_bmp);
-  tb2->AddTool(ID_Toolbar + 8, wxT("Test"), tb2_bmp1);
-  tb2->AddTool(ID_Toolbar + 9, wxT("Test"), tb2_bmp1);
-  tb2->AddSeparator();
-  tb2->AddTool(ID_Toolbar + 10, wxT("Test"), tb2_bmp1);
-  tb2->AddTool(ID_Toolbar + 11, wxT("Test"), tb2_bmp1);
-  tb2->AddSeparator();
-  tb2->AddTool(ID_Toolbar + 12, wxT("Test"), tb2_bmp1);
-  tb2->AddTool(ID_Toolbar + 13, wxT("Test"), tb2_bmp1);
-  tb2->AddTool(ID_Toolbar + 14, wxT("Test"), tb2_bmp1);
-  tb2->AddTool(ID_Toolbar + 15, wxT("Test"), tb2_bmp1);
-  tb2->SetCustomOverflowItems(prepend_items, append_items);
-  //tb2->EnableTool(ID_SampleItem+6, false);
-  tb2->Realize();
+  toolbar->AddTool(ID_Toolbar + 1, wxT("Disabled"), toolbar_bmp1);
+  toolbar->AddTool(ID_FLIPBOARD, wxT("Flip board"), flip_bmp);
+  toolbar->AddTool(ID_Toolbar + 8, wxT("Test"), toolbar_bmp1);
+  toolbar->AddTool(ID_Toolbar + 9, wxT("Test"), toolbar_bmp1);
+  toolbar->AddSeparator();
+  toolbar->AddTool(ID_Toolbar + 10, wxT("Test"), toolbar_bmp1);
+  toolbar->AddTool(ID_Toolbar + 11, wxT("Test"), toolbar_bmp1);
+  toolbar->AddSeparator();
+  toolbar->AddTool(ID_Toolbar + 12, wxT("Test"), toolbar_bmp1);
+  toolbar->AddTool(ID_Toolbar + 13, wxT("Test"), toolbar_bmp1);
+  toolbar->AddTool(ID_Toolbar + 14, wxT("Test"), toolbar_bmp1);
+  toolbar->AddTool(ID_Toolbar + 15, wxT("Test"), toolbar_bmp1);
+  toolbar->SetCustomOverflowItems(prepend_items, append_items);
+  //toolbar->EnableTool(ID_SampleItem+6, false);
+  toolbar->Realize();
 
-  wxAuiToolBar* tb5 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-      wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW | wxAUI_TB_VERTICAL);
-  tb5->SetToolBitmapSize(wxSize(48, 48));
-  tb5->AddTool(ID_Toolbar + 30, wxT("Test"), wxArtProvider::GetBitmap(wxART_ERROR));
-  tb5->AddSeparator();
-  tb5->AddTool(ID_Toolbar + 31, wxT("Test"), wxArtProvider::GetBitmap(wxART_QUESTION));
-  tb5->AddTool(ID_Toolbar + 32, wxT("Test"), wxArtProvider::GetBitmap(wxART_INFORMATION));
-  tb5->AddTool(ID_Toolbar + 33, wxT("Test"), wxArtProvider::GetBitmap(wxART_WARNING));
-  tb5->AddTool(ID_Toolbar + 34, wxT("Test"), wxArtProvider::GetBitmap(wxART_MISSING_IMAGE));
-  tb5->SetCustomOverflowItems(prepend_items, append_items);
-  tb5->Realize();
+  auiManager.AddPane(toolbar, wxAuiPaneInfo()
+      .Name(wxT("main_toolbar"))
+      .Caption(wxT("Main Toolbar"))
+      .ToolbarPane()
+      .Top()
+  );
 
-  auiManager.AddPane(&board,
-      wxAuiPaneInfo().Name(wxT("chessboard")).Caption(wxT("Pane Caption")).CenterPane().CloseButton(
-          true).MaximizeButton(true));
+  // Create the board panel
+  boardPanel = new wxPanel(this);
+  boardPanel->SetBackgroundColour(wxColour("#ffeeaa"));
 
-  // add the toolbars to the manager
-  auiManager.AddPane(tb2,
-      wxAuiPaneInfo().Name(wxT("tb2")).Caption(wxT("Big Toolbar")).ToolbarPane().Top());
+  // Init board
+  board = new ChessBoard(boardPanel, dataDir + "/themes");
+  board->addPiece(ChessBoard::wRook, a1);
+  board->addPiece(ChessBoard::wKing, e1);
 
-  auiManager.AddPane(tb5,
-      wxAuiPaneInfo().Name(wxT("tb5")).Caption(wxT("Sample Vertical Toolbar")).ToolbarPane().Left().GripperTop());
+  // Expand panel contents
+  wxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
+  sizer->Add(board, 1, wxEXPAND);
+  boardPanel->SetSizerAndFit(sizer);
 
-  // auiManager.GetPane(wxT("chessboard")).Show();
+  auiManager.AddPane(boardPanel, wxAuiPaneInfo().Name(wxT("board_panel")).CenterPane());
 
-  //frame->CreateStatusBar();
-  //frame->SetStatusText(_T("Hello World"));
+  // Create move Tree Panel
+  moveTree = new wxPanel(this);
+  moveTree->SetBackgroundColour(wxColour("#e9ddaf"));
+  auiManager.AddPane(moveTree, wxAuiPaneInfo()
+      .Left()
+      .Name(wxT("move_tree"))
+      .Caption(wxT("Move tree"))
+      .DefaultPane()
+      .BestSize(wxSize(200,100))
+      .MinSize(wxSize(200,100))
+  );
 
-  // box->Add(board, 1, wxEXPAND);
+  // Create game viewer panel
+  gameViewer = new wxPanel(this);
+  gameViewer->SetBackgroundColour(wxColour("#f6ffd5"));
+  auiManager.AddPane(gameViewer, wxAuiPaneInfo()
+      .Right()
+      .Name(wxT("game_viewer"))
+      .Caption(wxT("Notation"))
+      .DefaultPane()
+      .BestSize(wxSize(600,200))
+      .MinSize(wxSize(200,100))
 
-  // SetSizer(box);
+  );
 
-  // "commit" all changes made to wxAuiManager
+  // Create game list panel
+  gamesList = new wxPanel(this);
+  gamesList->SetBackgroundColour(wxColour("#f6ffd5"));
+  auiManager.AddPane(gamesList, wxAuiPaneInfo()
+      .Bottom()
+      .DefaultPane()
+      .Name(wxT("games_list"))
+      .Caption(wxT("Games list"))
+      .BestSize(wxSize(800,200))
+      .MinSize(wxSize(400,100))
+      .MaximizeButton()
+      .MinimizeButton(true)
+  );
+
+  // "Commit" all changes made to wxAuiManager
   auiManager.Update();
 }
 
@@ -125,11 +149,13 @@ void MainFrame::OnExit(wxCommandEvent & WXUNUSED(evt))
 
 void MainFrame::flipBoard(wxCommandEvent & WXUNUSED(evt))
 {
-  board.flip();
+  board->flip();
 }
 
 MainFrame::~MainFrame()
 {
+
+
   auiManager.UnInit();
 }
 
