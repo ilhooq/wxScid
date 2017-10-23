@@ -94,7 +94,7 @@ EVT_SIZE(ChessBoard::onSize)
 
 END_EVENT_TABLE()
 
-ChessBoard::ChessBoard(wxFrame* parent, wxString themeDir) :
+ChessBoard::ChessBoard(wxWindow* parent, wxString themeDir) :
 #ifdef __WXMSW__
  // Force Full repain on windows to avoid flickering
  // wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE|wxCLIP_CHILDREN ),

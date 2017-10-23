@@ -68,7 +68,7 @@ public:
     bPawn
   };
 
-  ChessBoard(wxFrame* parent, wxString themeDir);
+  ChessBoard(wxWindow* parent, wxString themeDir);
 
   void onPaint(wxPaintEvent & evt);
 
