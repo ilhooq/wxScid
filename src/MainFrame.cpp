@@ -38,6 +38,14 @@ MainFrame::MainFrame(
   // Tell wxAuiManager to manage this frame
   auiManager.SetManagedWindow(this);
 
+  // Customize AUI look
+  wxAuiDockArt* artProvider = auiManager.GetArtProvider();
+  artProvider->SetMetric(wxAUI_DOCKART_SASH_SIZE, 1);
+  artProvider->SetMetric(wxAUI_DOCKART_CAPTION_SIZE, 24);
+  artProvider->SetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE, 0);
+  artProvider->SetMetric(wxAUI_DOCKART_PANE_BUTTON_SIZE, 16);
+  artProvider->SetMetric(wxAUI_DOCKART_GRADIENT_TYPE, wxAUI_GRADIENT_NONE);
+
   // Toolbar
   // prepare a few custom overflow elements for the toolbars' overflow buttons
   wxAuiToolBarItemArray prepend_items;
@@ -72,7 +80,6 @@ MainFrame::MainFrame(
   toolbar->AddTool(ID_Toolbar + 14, wxT("Test"), toolbar_bmp1);
   toolbar->AddTool(ID_Toolbar + 15, wxT("Test"), toolbar_bmp1);
   toolbar->SetCustomOverflowItems(prepend_items, append_items);
-  //toolbar->EnableTool(ID_SampleItem+6, false);
   toolbar->Realize();
 
   auiManager.AddPane(toolbar, wxAuiPaneInfo()
