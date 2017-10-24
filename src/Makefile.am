@@ -2,17 +2,16 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS=wxScid
+bin_PROGRAMS=wxscid
 
-wxScid_SOURCES= \
+wxscid_SOURCES= \
 	App.cpp \
 	MainFrame.cpp \
 	widgets/ChessBoard.cpp
 
-wxScid_CXXFLAGS  = $(AM_CXXFLAGS) @WX_CXXFLAGS@
-# wxScid_LDADD   = $(AM_LIBS) @WX_LIBS@ scid/libscid.la
-wxScid_LDADD   = $(AM_LIBS) @WX_LIBS@
-wxScid_LDFLAGS = $(AM_LDFLAGS)
+wxscid_CXXFLAGS  = $(AM_CXXFLAGS) @WX_CXXFLAGS@
+wxscid_LDADD   = $(AM_LIBS) @WX_LIBS@
+wxscid_LDFLAGS = $(AM_LDFLAGS)
 
 MAINTAINERCLEANFILES = \
 	Makefile.in

@@ -1,4 +1,4 @@
-SUBDIRS=src
+SUBDIRS=resources src
 
 ACLOCAL_AMFLAGS = -I m4
 

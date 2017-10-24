@@ -4,7 +4,7 @@ dnl Check for autoconf version > 2.59
 AC_PREREQ(2.59)
 
 dnl Define package version
-AC_INIT(wxScid, 1.0)
+AC_INIT(wxscid, 1.0)
 
 dnl Put resulting configuration defines in this header file.
 AC_CONFIG_HEADERS([config.h])
@@ -22,8 +22,6 @@ AM_INIT_AUTOMAKE([foreign])
 dnl Include maintainer mode targets in Makefile
 AM_MAINTAINER_MODE
 
-dnl AM_CPPFLAGS = -DDATADIR='"$(datadir)"'
-
 dnl  Check for compilers
 dnl AC_PROG_CC
 AC_PROG_CXX
@@ -33,7 +31,7 @@ WX_CONFIG_OPTIONS
 WX_STANDARD_OPTIONS([debug,unicode,shared,toolkit,wxshared])
 
 WX_CONVERT_STANDARD_OPTIONS_TO_WXCONFIG_FLAGS
-WX_CONFIG_CHECK([3.0.0], [wxWin=1],,[aui,xrc,html,core,net,base],[$WXCONFIG_FLAGS])
+WX_CONFIG_CHECK([3.0.0], [wxWin=1],,[base,core,adv,xrc,aui],[$WXCONFIG_FLAGS])
 WX_DETECT_STANDARD_OPTION_VALUES
 
 # Initialize libtool
@@ -59,6 +57,7 @@ AX_PTHREAD
 
 AC_CONFIG_FILES([
 	Makefile
+	resources/Makefile
 	src/Makefile
 ])
 
