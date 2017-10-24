@@ -23,3 +23,10 @@ Makefile
 Makefile.in
 .deps
 *.o
+
+# libtools
+libtool
+ltmain.sh
+.libs
+*.la
+*.lo
