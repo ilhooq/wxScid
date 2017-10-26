@@ -1,4 +1,4 @@
-# SUBDIRS = scid
+SUBDIRS = scid
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -10,7 +10,7 @@ wxscid_SOURCES= \
 	widgets/ChessBoard.cpp
 
 wxscid_CXXFLAGS  = $(AM_CXXFLAGS) @WX_CXXFLAGS@
-wxscid_LDADD   = $(AM_LIBS) @WX_LIBS@
+wxscid_LDADD   = $(AM_LIBS) @WX_LIBS@ scid/libscid.la
 wxscid_LDFLAGS = $(AM_LDFLAGS)
 
 MAINTAINERCLEANFILES = \

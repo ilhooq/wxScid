@@ -26,6 +26,9 @@ dnl  Check for compilers
 dnl AC_PROG_CC
 AC_PROG_CXX
 
+AC_CHECK_LIB(pthread, pthread_create, [PTHREAD_LIBS+=-lpthread])
+AC_SUBST(PTHREAD_LIBS)
+
 dnl Check and init WxWidgets
 WX_CONFIG_OPTIONS
 WX_STANDARD_OPTIONS([debug,unicode,shared,toolkit,wxshared])
@@ -35,30 +38,19 @@ WX_CONFIG_CHECK([3.0.0], [wxWin=1],,[base,core,adv,xrc,aui],[$WXCONFIG_FLAGS])
 WX_DETECT_STANDARD_OPTION_VALUES
 
 # Initialize libtool
-# LT_PREREQ([2.2])
-# LT_INIT([disable-static])
+LT_PREREQ([2.2])
+LT_INIT([disable-static])
 
-# LT Version numbers, remember to change them just *before* a release.
-#   (Interfaces removed:    CURRENT++, AGE=0, REVISION=0)
-#   (Interfaces added:      CURRENT++, AGE++, REVISION=0)
-#   (No interfaces changed:                   REVISION++)
-
-# LIBSCID
-# LIBSCID_CURRENT=4
-# LIBSCID_REVISION=6
-# LIBSCID_AGE=4
-
-# AC_SUBST(LIBSCID_CURRENT)
-# AC_SUBST(LIBSCID_REVISION)
-# AC_SUBST(LIBSCID_AGE)
-
-# Set $PTHREAD_CC $CFLAGS $PTHREAD_CFLAGS $LDFLAGS ... $PTHREAD_LIBS $LIBS
-AX_PTHREAD
+# SCID code version. See https://sourceforge.net/p/scid/code/
+SCID_VERSION=4.6.5
+AC_SUBST(SCID_VERSION)
 
 AC_CONFIG_FILES([
 	Makefile
 	resources/Makefile
 	src/Makefile
+	src/scid/Makefile
+	tests/Makefile
 ])
 
 AC_OUTPUT
