@@ -1,19 +1,24 @@
 
 # WxScid
 
-Wxwidget Interface for SCID
+Wxwidget Interface for [Scid](http://scid.sourceforge.net/)
 
 ## Code features
 
-Dockable interface : with AUI
+**Implemented:**
 
-Plugin API : Extend app with plugins
+* Dockable interface with [AUI](https://wiki.wxwidgets.org/WxAUI)
 
-Bind Scripting language : Lua with wxLua ? 
+* XML : use xrc to build dialogs / frames
 
-I18n: Internationalize app with Gettext
+**Todo:**
 
-XML : use xrc to build dialogs / frames
+* I18n: Internationalize app with Gettext
+
+* Plugin API : Extend app with plugins
+
+* Bind Scripting language : Lua with wxLua ? 
+
 
 ## Compilation
 
