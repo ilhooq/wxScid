@@ -57,14 +57,14 @@ struct ScidDatabaseEntry
   unsigned int ply;
 };
 
-/*
-class ScidDriver
-{
-  ~ScidDriver();
 
-  virtual void onListGetEntry(ScidDatabaseEntry entry);
+class ScidListEventHandler
+{
+public:
+  virtual ~ScidListEventHandler() {};
+  virtual void onListGetEntry(ScidDatabaseEntry entry) = 0;
 };
-*/
+
 
 
 /*
@@ -79,7 +79,7 @@ public:
   Scid();
   ~Scid();
   int openDatabase(const char* filename);
-  void listGames(int baseHandle, const char* ordering, const char* filterId, void(*onListGetEntry)(ScidDatabaseEntry), unsigned int start=0, unsigned int count=0);
+  void listGames(int baseHandle, const char* ordering, const char* filterId, ScidListEventHandler* eventHandler, unsigned int start=0, unsigned int count=0);
 };
 
 

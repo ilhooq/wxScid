@@ -74,7 +74,7 @@ int Scid::openDatabase(const char* filename)
   return DBasePool::switchCurrent(dbase);
 }
 
-void Scid::listGames(int baseHandle, const char* ordering, const char* filterId, void(*onListGetEntry)(ScidDatabaseEntry), unsigned int start, unsigned int count)
+void Scid::listGames(int baseHandle, const char* ordering, const char* filterId, ScidListEventHandler* eventHandler, unsigned int start, unsigned int count)
 {
   scidBaseT* dbase = DBasePool::getBase(baseHandle);
 
@@ -169,7 +169,7 @@ void Scid::listGames(int baseHandle, const char* ordering, const char* filterId,
     entry.index = idx;
     entry.ply = ply;
 
-    onListGetEntry(entry);
+    eventHandler->onListGetEntry(entry);
   }
 
   delete [] idxList;
