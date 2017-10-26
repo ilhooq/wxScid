@@ -9,6 +9,7 @@
 #include "wx/wx.h"
 #include "wx/aui/aui.h"
 #include "widgets/ChessBoard.h"
+#include "scid/scid.h"
 
 class MainFrame: public wxFrame
 {
@@ -34,12 +35,15 @@ public:
   ~MainFrame();
 
   void flipBoard(wxCommandEvent & WXUNUSED(evt));
+  void onListGetEntry(ScidDatabaseEntry entry);
 
 private:
 
   wxAuiManager auiManager;
 
   void OnExit(wxCommandEvent& evt);
+
+  void OpenDatabase(wxCommandEvent& evt);
 
   wxDECLARE_EVENT_TABLE();
 

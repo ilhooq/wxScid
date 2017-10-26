@@ -7,17 +7,33 @@
 #include "wx/xrc/xmlres.h"
 #include "wx/artprov.h"
 #include "wx/aui/aui.h"
+#include "wx/filedlg.h"
 
 #include "widgets/ChessBoard.h"
 #include "MainFrame.h"
 #include "App.h"
 #include "Squares.h"
+#include "scid/scid.h"
 
 wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
   EVT_MENU(wxID_EXIT,  MainFrame::OnExit)
+  EVT_MENU(XRCID("open_database"),  MainFrame::OpenDatabase)
   // EVT_UPDATE_UI(MainFrame::ID_FLIPBOARD, MainFrame::updateUI)
   EVT_MENU(MainFrame::ID_FLIPBOARD, MainFrame::flipBoard)
 wxEND_EVENT_TABLE()
+
+class ListGamesEventHandler : public ScidListEventHandler
+{
+public:
+  void onListGetEntry(ScidDatabaseEntry entry);
+};
+
+
+void ListGamesEventHandler::onListGetEntry(ScidDatabaseEntry entry)
+{
+  wxMessageOutputLog log;
+  log.Printf("White player : %s \n", (wxString) entry.white_name);
+}
 
 MainFrame::MainFrame(
   wxWindow* parent,
@@ -146,6 +162,40 @@ MainFrame::MainFrame(
 
   // "Commit" all changes made to wxAuiManager
   auiManager.Update();
+}
+
+
+
+void MainFrame::OpenDatabase(wxCommandEvent& WXUNUSED(evt))
+{
+  wxFileDialog* OpenDialog = new wxFileDialog (
+   this,
+   _("Choose a database to open"),
+   wxEmptyString,
+   wxEmptyString,
+    _("Database files (*.si4, *.pgn)|*.si4;*.pgn"),
+    wxFD_OPEN,
+    wxDefaultPosition
+  );
+
+  if (OpenDialog->ShowModal() == wxID_OK)
+  {
+    wxString path = OpenDialog->GetPath();
+
+    try {
+      int dbHandle = wxGetApp().scid->openDatabase(path.c_str());
+      ListGamesEventHandler enventHandler;
+      wxGetApp().scid->listGames(dbHandle, "d+", "dbfilter", &enventHandler, 0, 20);
+
+    } catch(ScidError &error) {
+      wxMessageOutputStderr err;
+      err.Printf(wxT("Error : %s - code : %d.\n"), error.what(), error.getCode());
+    }
+
+    SetTitle(wxString("Database - ") << OpenDialog->GetFilename()); // Set the Title to reflect the file open
+  }
+
+  OpenDialog->Destroy();
 }
 
 void MainFrame::OnExit(wxCommandEvent & WXUNUSED(evt))

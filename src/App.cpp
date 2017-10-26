@@ -6,7 +6,6 @@
 #include "App.h"
 
 #include "wx/wx.h"
-#include "wx/msgout.h"
 #include "wx/xrc/xmlres.h"
 #include "wx/stdpaths.h"
 #include "MainFrame.h"
@@ -27,6 +26,8 @@ bool App::OnInit()
   if (!wxXmlResource::Get()->LoadAllFiles(getDataDir() + "/xrc")) {
     return false;
   }
+
+  scid = new Scid();
 
   frame = new MainFrame(NULL, wxID_ANY, _T("WxScid"), wxDefaultPosition, wxSize(800, 600));
   frame->Show(true);
