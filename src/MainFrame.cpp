@@ -25,11 +25,11 @@ wxEND_EVENT_TABLE()
 class ListGamesEventHandler : public ScidListEventHandler
 {
 public:
-  void onListGetEntry(ScidDatabaseEntry entry);
+  void onListGetEntry(ScidDatabaseEntry& entry);
 };
 
 
-void ListGamesEventHandler::onListGetEntry(ScidDatabaseEntry entry)
+void ListGamesEventHandler::onListGetEntry(ScidDatabaseEntry& entry)
 {
   wxMessageOutputLog log;
   log.Printf("White player : %s \n", (wxString) entry.white_name);

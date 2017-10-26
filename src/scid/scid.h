@@ -62,7 +62,7 @@ class ScidListEventHandler
 {
 public:
   virtual ~ScidListEventHandler() {};
-  virtual void onListGetEntry(ScidDatabaseEntry entry) = 0;
+  virtual void onListGetEntry(ScidDatabaseEntry& entry) = 0;
 };
 
 
