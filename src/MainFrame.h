@@ -35,7 +35,6 @@ public:
   ~MainFrame();
 
   void flipBoard(wxCommandEvent & WXUNUSED(evt));
-  void onListGetEntry(ScidDatabaseEntry entry);
 
 private:
 
