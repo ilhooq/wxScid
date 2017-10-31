@@ -7,7 +7,8 @@ bin_PROGRAMS=wxscid
 wxscid_SOURCES= \
 	App.cpp \
 	MainFrame.cpp \
-	widgets/ChessBoard.cpp
+	widgets/ChessBoard.cpp \
+	widgets/GamesListView.cpp
 
 wxscid_CXXFLAGS  = $(AM_CXXFLAGS) @WX_CXXFLAGS@
 wxscid_LDADD   = $(AM_LIBS) @WX_LIBS@ scid/libscid.la

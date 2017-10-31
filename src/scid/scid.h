@@ -62,7 +62,7 @@ class ScidListEventHandler
 {
 public:
   virtual ~ScidListEventHandler() {};
-  virtual void onListGetEntry(ScidDatabaseEntry& entry) = 0;
+  virtual void onListGetEntry(ScidDatabaseEntry entry) = 0;
 };
 
 
@@ -80,6 +80,8 @@ public:
   ~Scid();
   int openDatabase(const char* filename);
   void listGames(int baseHandle, const char* ordering, const char* filterId, ScidListEventHandler* eventHandler, unsigned int start=0, unsigned int count=0);
+  /* Get the number of games in the database */
+  unsigned int numGames(int baseHandle);
 };
 
 

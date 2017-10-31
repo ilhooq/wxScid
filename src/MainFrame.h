@@ -19,6 +19,8 @@ class MainFrame: public wxFrame
     ID_CustomizeToolbar,
     ID_Toolbar,
     ID_FLIPBOARD,
+    ID_GAMES_LIST_VIEW,
+
     ID_CreatePerspective,
     ID_CopyPerspectiveCode,
 

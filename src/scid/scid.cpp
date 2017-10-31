@@ -176,3 +176,9 @@ void Scid::listGames(int baseHandle, const char* ordering, const char* filterId,
 
 }
 
+unsigned int Scid::numGames(int baseHandle)
+{
+  scidBaseT* dbase = DBasePool::getBase(baseHandle);
+  return dbase->numGames();
+}
+

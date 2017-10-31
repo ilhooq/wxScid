@@ -10,6 +10,7 @@
 #include "wx/filedlg.h"
 
 #include "widgets/ChessBoard.h"
+#include "widgets/GamesListView.h"
 #include "MainFrame.h"
 #include "App.h"
 #include "Squares.h"
@@ -21,19 +22,6 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
   // EVT_UPDATE_UI(MainFrame::ID_FLIPBOARD, MainFrame::updateUI)
   EVT_MENU(MainFrame::ID_FLIPBOARD, MainFrame::flipBoard)
 wxEND_EVENT_TABLE()
-
-class ListGamesEventHandler : public ScidListEventHandler
-{
-public:
-  void onListGetEntry(ScidDatabaseEntry& entry);
-};
-
-
-void ListGamesEventHandler::onListGetEntry(ScidDatabaseEntry& entry)
-{
-  wxMessageOutputLog log;
-  log.Printf("White player : %s \n", (wxString) entry.white_name);
-}
 
 MainFrame::MainFrame(
   wxWindow* parent,
@@ -160,11 +148,15 @@ MainFrame::MainFrame(
       .MinimizeButton(true)
   );
 
+  GamesListView* listView = new GamesListView(gamesList, ID_GAMES_LIST_VIEW, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_VIRTUAL);
+
+  wxSizer *listSizer = new wxBoxSizer(wxHORIZONTAL);
+  listSizer->Add(listView, 1, wxEXPAND);
+  gamesList->SetSizerAndFit(listSizer);
+
   // "Commit" all changes made to wxAuiManager
   auiManager.Update();
 }
-
-
 
 void MainFrame::OpenDatabase(wxCommandEvent& WXUNUSED(evt))
 {
@@ -184,9 +176,10 @@ void MainFrame::OpenDatabase(wxCommandEvent& WXUNUSED(evt))
 
     try {
       int dbHandle = wxGetApp().scid->openDatabase(path.c_str());
-      ListGamesEventHandler enventHandler;
-      wxGetApp().scid->listGames(dbHandle, "d+", "dbfilter", &enventHandler, 0, 20);
-
+      GamesListView * listView = (GamesListView *) wxWindow::FindWindowById(ID_GAMES_LIST_VIEW);
+      listView->SetItemCount((long) wxGetApp().scid->numGames(dbHandle));
+      listView->dbHandle = dbHandle;
+      listView->scid = wxGetApp().scid;
     } catch(ScidError &error) {
       wxMessageOutputStderr err;
       err.Printf(wxT("Error : %s - code : %d.\n"), error.what(), error.getCode());
@@ -211,8 +204,6 @@ void MainFrame::flipBoard(wxCommandEvent & WXUNUSED(evt))
 
 MainFrame::~MainFrame()
 {
-
-
   auiManager.UnInit();
 }
 
