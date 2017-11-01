@@ -127,7 +127,7 @@ void Scid::listGames(int baseHandle, const char* ordering, const char* filterId,
       }
     }
 
-    entry.white_elo = eloStr.c_str();
+    entry.white_elo = eloStr;
 
     eloT belo = ie->GetBlackElo();
 
@@ -142,10 +142,9 @@ void Scid::listGames(int baseHandle, const char* ordering, const char* filterId,
       }
     }
 
-    entry.black_elo = eloStr.c_str();
+    entry.black_elo = eloStr;
 
     date_DecodeToString(ie->GetDate(), entry.date);
-
     entry.event_name = ie->GetEventName(nb);
     entry.round_name = ie->GetRoundName(nb);
     entry.site_name = ie->GetSiteName(nb);
@@ -155,17 +154,13 @@ void Scid::listGames(int baseHandle, const char* ordering, const char* filterId,
     entry.deleted_flag = ie->GetDeleteFlag();
     ie->GetFlagStr (entry.flags, "WBMENPTKQ!?U123456");
     eco_ToExtendedString(ie->GetEcoCode(), entry.eco);
-
-    std::string endMaterial = matsig_makeString(ie->GetFinalMatSig());
-    entry.end_material = endMaterial.c_str();
+    entry.end_material = matsig_makeString(ie->GetFinalMatSig());
     entry.start_flag = ie->GetStartFlag();
-
     date_DecodeToString (ie->GetEventDate(), entry.event_date);
     entry.year = ie->GetYear();
     entry.rating = ie->GetRating(nb);
-
     FastGame game = dbase->getGame(ie);
-    entry.first_moves = game.getMoveSAN(ply, 10).c_str();
+    entry.first_moves = game.getMoveSAN(ply, 10);
     entry.index = idx;
     entry.ply = ply;
 

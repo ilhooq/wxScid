@@ -1,6 +1,7 @@
 #ifndef libScid_H
 #define libScid_H
 #include <exception>
+#include <string>
 
 class ScidError : std::exception
 {
@@ -31,28 +32,28 @@ private:
 
 struct ScidDatabaseEntry
 {
-  const char* result;
+  std::string result;
   unsigned short moves_number;
-  const char* white_name;
-  const char* black_name;
-  const char* white_elo;
-  const char* black_elo;
+  std::string white_name;
+  std::string black_name;
+  std::string white_elo;
+  std::string black_elo;
   char date[16];
-  const char* event_name;
-  const char* round_name;
-  const char* site_name;
+  std::string event_name;
+  std::string round_name;
+  std::string site_name;
   unsigned int nag_count;
   unsigned int comment_count;
   unsigned int variation_count;
   bool deleted_flag;
   char flags[16];
   char eco[6];
-  const char* end_material;
+  std::string end_material;
   bool start_flag;
   char event_date[16];
   unsigned int year;
   unsigned char rating;
-  const char* first_moves;
+  std::string first_moves;
   unsigned int index;
   unsigned int ply;
 };
