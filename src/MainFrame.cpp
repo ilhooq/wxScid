@@ -16,13 +16,6 @@
 #include "MainFrame.h"
 #include "Squares.h"
 
-wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
-  EVT_MENU(wxID_EXIT,  MainFrame::OnExit)
-  EVT_MENU(XRCID("open_database"),  MainFrame::OpenDatabase)
-  // EVT_UPDATE_UI(MainFrame::ID_FLIPBOARD, MainFrame::updateUI)
-  EVT_MENU(MainFrame::ID_FLIPBOARD, MainFrame::flipBoard)
-wxEND_EVENT_TABLE()
-
 MainFrame::MainFrame(
   wxWindow* parent,
   wxWindowID id,
@@ -38,6 +31,11 @@ MainFrame::MainFrame(
 
   // Load the menubar from XRC
   SetMenuBar(wxXmlResource::Get()->LoadMenuBar(wxT("mainmenu")));
+
+  // Binds events dynamically
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OnExit, this, wxID_EXIT);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OpenDatabase, this, XRCID("open_database"));
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::flipBoard, this, MainFrame::ID_FLIPBOARD);
 
   // Tell wxAuiManager to manage this frame
   auiManager.SetManagedWindow(this);

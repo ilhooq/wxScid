@@ -42,7 +42,6 @@ private:
   wxAuiManager auiManager;
   void OnExit(wxCommandEvent& evt);
   void OpenDatabase(wxCommandEvent& evt);
-  wxDECLARE_EVENT_TABLE();
 
 protected:
   ChessBoard* board;
