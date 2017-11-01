@@ -8,7 +8,8 @@ wxscid_SOURCES= \
 	App.cpp \
 	MainFrame.cpp \
 	widgets/ChessBoard.cpp \
-	widgets/GamesListCtrl.cpp
+	widgets/GamesListCtrl.cpp \
+	widgets/GameTxtCtrl.cpp
 
 wxscid_CXXFLAGS  = $(AM_CXXFLAGS) @WX_CXXFLAGS@
 wxscid_LDADD   = $(AM_LIBS) @WX_LIBS@ scid/libscid.la

@@ -11,6 +11,7 @@
 
 #include "widgets/ChessBoard.h"
 #include "widgets/GamesListCtrl.h"
+#include "widgets/GameTxtCtrl.h"
 #include "MainFrame.h"
 #include "App.h"
 #include "Squares.h"
@@ -121,7 +122,7 @@ MainFrame::MainFrame(
       .MinSize(wxSize(200,100))
   );
 
-  // Create game viewer panel
+  // Create game text panel
   gameViewer = new wxPanel(this);
   gameViewer->SetBackgroundColour(wxColour("#f6ffd5"));
   auiManager.AddPane(gameViewer, wxAuiPaneInfo()
@@ -131,8 +132,13 @@ MainFrame::MainFrame(
       .DefaultPane()
       .BestSize(wxSize(600,200))
       .MinSize(wxSize(200,100))
-
   );
+
+  GameTxtCtrl *txtCtrl = new GameTxtCtrl(gameViewer, ID_CTRL_GAME_TXT);
+
+  wxSizer *txtSizer = new wxBoxSizer(wxHORIZONTAL);
+  txtSizer->Add(txtCtrl, 1, wxEXPAND);
+  gameViewer->SetSizerAndFit(txtSizer);
 
   // Create game list panel
   gamesList = new wxPanel(this);
