@@ -28,17 +28,32 @@ GamesListView::GamesListView(wxWindow *parent, const wxWindowID id, const wxPoin
   itemCol.SetAlign(wxLIST_FORMAT_CENTRE);
   InsertColumn(2, itemCol);
 
-  itemCol.SetText(wxT("Black"));
+  itemCol.SetText(wxT("W-Elo"));
   itemCol.SetAlign(wxLIST_FORMAT_CENTRE);
   InsertColumn(3, itemCol);
+
+  itemCol.SetText(wxT("Black"));
+  itemCol.SetAlign(wxLIST_FORMAT_CENTRE);
+  InsertColumn(4, itemCol);
+
+  itemCol.SetText(wxT("B-Elo"));
+  itemCol.SetAlign(wxLIST_FORMAT_CENTRE);
+  InsertColumn(5, itemCol);
+
+  itemCol.SetText(wxT("Moves"));
+  itemCol.SetAlign(wxLIST_FORMAT_CENTRE);
+  InsertColumn(6, itemCol);
 
   SetColumnWidth(0, 150);
   SetColumnWidth(1, 150);
   SetColumnWidth(2, 150);
   SetColumnWidth(3, 150);
+  SetColumnWidth(4, 150);
+  SetColumnWidth(5, 150);
+  SetColumnWidth(6, 200);
 
-  // SetItemCount(500);
   EnableAlternateRowColours();
+
   dbHandle = 0;
   scid = NULL;
 }
@@ -88,7 +103,13 @@ wxString GamesListView::OnGetItemText(long item, long column) const
     case 2:
       return (wxString) entry.white_name;
     case 3:
+      return (wxString) entry.white_elo;
+    case 4:
       return (wxString) entry.black_name;
+    case 5:
+      return (wxString) entry.black_elo;
+    case 6:
+      return (wxString) entry.first_moves;
     default:
       return wxString("Unknown column");
   }
