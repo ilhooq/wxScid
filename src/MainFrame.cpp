@@ -10,7 +10,7 @@
 #include "wx/filedlg.h"
 
 #include "widgets/ChessBoard.h"
-#include "widgets/GamesListView.h"
+#include "widgets/GamesListCtrl.h"
 #include "MainFrame.h"
 #include "App.h"
 #include "Squares.h"
@@ -148,7 +148,7 @@ MainFrame::MainFrame(
       .MinimizeButton(true)
   );
 
-  GamesListView* listView = new GamesListView(gamesList, ID_GAMES_LIST_VIEW, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_VIRTUAL);
+  GamesListCtrl* listView = new GamesListCtrl(gamesList, ID_GAMES_LIST_VIEW, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_VIRTUAL);
 
   wxSizer *listSizer = new wxBoxSizer(wxHORIZONTAL);
   listSizer->Add(listView, 1, wxEXPAND);
@@ -176,10 +176,10 @@ void MainFrame::OpenDatabase(wxCommandEvent& WXUNUSED(evt))
 
     try {
       int dbHandle = wxGetApp().scid->openDatabase(path.c_str());
-      GamesListView * listView = (GamesListView *) wxWindow::FindWindowById(ID_GAMES_LIST_VIEW);
-      listView->SetItemCount((long) wxGetApp().scid->numGames(dbHandle));
-      listView->dbHandle = dbHandle;
-      listView->scid = wxGetApp().scid;
+      GamesListCtrl * listCtrl = (GamesListCtrl *) wxWindow::FindWindowById(ID_GAMES_LIST_VIEW);
+      listCtrl->SetItemCount((long) wxGetApp().scid->numGames(dbHandle));
+      listCtrl->dbHandle = dbHandle;
+      listCtrl->scid = wxGetApp().scid;
     } catch(ScidError &error) {
       wxMessageOutputStderr err;
       err.Printf(wxT("Error : %s - code : %d.\n"), error.what(), error.getCode());

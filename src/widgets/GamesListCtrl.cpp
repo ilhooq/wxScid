@@ -1,18 +1,19 @@
 /*
- * GamesListView.cpp
+ * GamesListCtrl.cpp
  *
  *  Created on: 27 oct. 2017
  */
+#include "GamesListCtrl.h"
+
 #include "wx/wx.h"
-#include "GamesListView.h"
 #include "scid/scid.h"
 
 
-BEGIN_EVENT_TABLE(GamesListView, wxListCtrl)
-  EVT_LIST_CACHE_HINT(wxID_ANY, GamesListView::OnCacheHint)
+BEGIN_EVENT_TABLE(GamesListCtrl, wxListCtrl)
+  EVT_LIST_CACHE_HINT(wxID_ANY, GamesListCtrl::OnCacheHint)
 END_EVENT_TABLE()
 
-GamesListView::GamesListView(wxWindow *parent, const wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
+GamesListCtrl::GamesListCtrl(wxWindow *parent, const wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
 : wxListCtrl(parent, id, pos, size, style)
 {
   wxListItem itemCol;
@@ -59,7 +60,7 @@ GamesListView::GamesListView(wxWindow *parent, const wxWindowID id, const wxPoin
 }
 
 // This function is called during the window OnPaint event
-void GamesListView::OnCacheHint(wxListEvent& event)
+void GamesListCtrl::OnCacheHint(wxListEvent& event)
 {
   if (hashEntries.size() > 100000) {
     // sizeof ScidDatabaseEntry = 184 bytes
@@ -88,9 +89,9 @@ void GamesListView::OnCacheHint(wxListEvent& event)
   }
 }
 
-wxString GamesListView::OnGetItemText(long item, long column) const
+wxString GamesListCtrl::OnGetItemText(long item, long column) const
 {
-  wxASSERT(GamesListView::CacheEntryExists(item));
+  wxASSERT(GamesListCtrl::CacheEntryExists(item));
 
   wxScidHashEntries::const_iterator it = hashEntries.find(item);
   ScidDatabaseEntry entry = it->second;
@@ -115,7 +116,7 @@ wxString GamesListView::OnGetItemText(long item, long column) const
   }
 }
 
-bool GamesListView::CacheEntryExists(long item) const
+bool GamesListCtrl::CacheEntryExists(long item) const
 {
   wxScidHashEntries::const_iterator it = hashEntries.find(item);
   return (it != hashEntries.end());

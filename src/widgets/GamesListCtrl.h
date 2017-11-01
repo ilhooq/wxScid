@@ -43,10 +43,10 @@ private:
   ScidDatabaseEntry *entriesStart;
 };
 
-class GamesListView : public wxListCtrl
+class GamesListCtrl : public wxListCtrl
 {
 public:
-  GamesListView(wxWindow *parent, const wxWindowID id, const wxPoint& pos, const wxSize& size, long style);
+  GamesListCtrl(wxWindow *parent, const wxWindowID id, const wxPoint& pos, const wxSize& size, long style);
 
   int dbHandle;
   Scid *scid;
