@@ -111,18 +111,18 @@ wxString GamesListCtrl::OnGetItemText(long item, long column) const
     case 1:
       return (wxString) entry.result;
     case 2:
-      return (wxString) entry.white_name;
+      return wxString::FromUTF8(entry.white_name.c_str());
     case 3:
       return (wxString) entry.white_elo;
     case 4:
-      return (wxString) entry.black_name;
+      return wxString::FromUTF8(entry.black_name.c_str());
     case 5:
       return (wxString) entry.black_elo;
     case 6:
       return (wxString) entry.first_moves;
-    default:
-      return wxString("Unknown column");
   }
+
+  return wxString("Unknown column");
 }
 
 bool GamesListCtrl::CacheEntryExists(long item) const
