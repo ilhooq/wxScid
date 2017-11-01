@@ -6,8 +6,7 @@
 #ifndef APP_H_
 #define APP_H_
 
-#include "wx/wx.h"
-#include "wx/msgout.h"
+#include <wx/app.h>
 #include "scid/scid.h"
 
 class App: public wxApp

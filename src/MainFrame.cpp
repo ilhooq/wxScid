@@ -2,20 +2,19 @@
  * MainFrame.cpp
  *
  */
+#include <wx/wx.h>
+#include <wx/xrc/xmlres.h>
+#include <wx/artprov.h>
+#include <wx/aui/aui.h>
+#include <wx/filedlg.h>
 
-#include "wx/wx.h"
-#include "wx/xrc/xmlres.h"
-#include "wx/artprov.h"
-#include "wx/aui/aui.h"
-#include "wx/filedlg.h"
-
+#include "scid/scid.h"
 #include "widgets/ChessBoard.h"
 #include "widgets/GamesListCtrl.h"
 #include "widgets/GameTxtCtrl.h"
-#include "MainFrame.h"
 #include "App.h"
+#include "MainFrame.h"
 #include "Squares.h"
-#include "scid/scid.h"
 
 wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
   EVT_MENU(wxID_EXIT,  MainFrame::OnExit)

@@ -6,13 +6,13 @@
 #ifndef WIDGETS_CHESSBOARD_H_
 #define WIDGETS_CHESSBOARD_H_
 
-#include "wx/window.h"
+#include <wx/window.h>
 
 #if defined(__WXMSW__)
-#include "wx/generic/dragimgg.h"
+#include <wx/generic/dragimgg.h>
 #define wxDragImage wxGenericDragImage
 #else
-#include "wx/dragimag.h"
+#include <wx/dragimag.h>
 #endif
 
 #include "../Squares.h"
@@ -85,13 +85,17 @@ DECLARE_EVENT_TABLE()
 
 protected:
   wxImage theme;
-  wxImage themeImages[11];wxColor backgroundColor;wxColor wSquareColor;wxColor bSquareColor;
+  wxImage themeImages[11];
+  wxColor backgroundColor;
+  wxColor wSquareColor;
+  wxColor bSquareColor;
   wxSize size;
   int boardSize;
   int squareSize;
   ChessBoardSquare squares[64];
   bool flipped;
-  ChessBoardPiece* dragPiece;wxDragImage * dragImage;
+  ChessBoardPiece* dragPiece;
+  wxDragImage * dragImage;
   wxPoint dragStartPos;
 
   char getRankIndex(char squareIndex);

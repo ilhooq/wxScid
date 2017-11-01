@@ -6,10 +6,9 @@
 #ifndef MAINFRAME_H_
 #define MAINFRAME_H_
 
-#include "wx/wx.h"
-#include "wx/aui/aui.h"
+#include <wx/aui/aui.h>
+#include <wx/frame.h>
 #include "widgets/ChessBoard.h"
-#include "scid/scid.h"
 
 class MainFrame: public wxFrame
 {
@@ -40,13 +39,9 @@ public:
   void flipBoard(wxCommandEvent & WXUNUSED(evt));
 
 private:
-
   wxAuiManager auiManager;
-
   void OnExit(wxCommandEvent& evt);
-
   void OpenDatabase(wxCommandEvent& evt);
-
   wxDECLARE_EVENT_TABLE();
 
 protected:

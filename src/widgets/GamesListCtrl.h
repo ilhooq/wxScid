@@ -7,8 +7,8 @@
 #ifndef WIDGETS_GAMESLISTVIEW_H_
 #define WIDGETS_GAMESLISTVIEW_H_
 
-#include "wx/wx.h"
-#include "wx/listctrl.h"
+#include <wx/listctrl.h>
+
 #include "scid/scid.h"
 
 // Declare a hash map with int keys and ScidDatabaseEntry* values
@@ -59,7 +59,5 @@ private:
   virtual wxString OnGetItemText(long item, long column) const;
 wxDECLARE_EVENT_TABLE();
 };
-
-
 
 #endif /* WIDGETS_GAMESLISTVIEW_H_ */

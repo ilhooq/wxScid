@@ -3,16 +3,8 @@
  *
  */
 
-#include "wx/wx.h"
-#include "wx/event.h"
-#include "wx/dcgraph.h"
-
-#if defined(__WXMSW__)
-#include "wx/generic/dragimgg.h"
-#define wxDragImage wxGenericDragImage
-#else
-#include "wx/dragimag.h"
-#endif
+#include <wx/wx.h>
+#include <wx/dcgraph.h>
 
 #include "ChessBoard.h"
 #include "../Squares.h"

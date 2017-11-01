@@ -3,10 +3,12 @@
  *
  *  Created on: 27 oct. 2017
  */
-#include "GamesListCtrl.h"
 
-#include "wx/wx.h"
+#include <wx/log.h>
+#include <wx/string.h>
+
 #include "scid/scid.h"
+#include "GamesListCtrl.h"
 
 
 BEGIN_EVENT_TABLE(GamesListCtrl, wxListCtrl)
