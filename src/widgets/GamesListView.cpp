@@ -43,17 +43,24 @@ GamesListView::GamesListView(wxWindow *parent, const wxWindowID id, const wxPoin
   scid = NULL;
 }
 
+// This function is called during the window OnPaint event
 void GamesListView::OnCacheHint(wxListEvent& event)
 {
-  wxPrintf(wxT("OnCacheHint: cache items %ld..%ld \n"), event.GetCacheFrom(), event.GetCacheTo());
+  if (hashEntries.size() > 100000) {
+    // sizeof ScidDatabaseEntry = 184 bytes
+    // 100000 entries = 18.4 Mbytes
+    hashEntries.clear();
+  }
 
   if (CacheEntryExists(event.GetCacheFrom()) && CacheEntryExists(event.GetCacheTo())) {
-    // Items already exist
-    RefreshItems(event.GetCacheFrom(), event.GetCacheTo());
+    // Items already exists
     return;
   }
 
-  unsigned int count = event.GetCacheTo() - event.GetCacheFrom();
+  int count = event.GetCacheTo() - event.GetCacheFrom();
+
+  // Add padding to retrieve more items in the cache
+  count += 100;
 
   ListGamesEventHandler eventHandler(count);
 
@@ -63,17 +70,12 @@ void GamesListView::OnCacheHint(wxListEvent& event)
 
   for (int i=0, item = event.GetCacheFrom(); i < count; i++, item++) {
     hashEntries[item] = *(entries+i);
-    wxPrintf(wxT("Entry %d - Index: %d - Ply: %d - White name: %s\n"),i, hashEntries[item].index, hashEntries[item].ply, (wxString) hashEntries[item].white_name);
   }
 }
 
 wxString GamesListView::OnGetItemText(long item, long column) const
 {
-  bool found = GamesListView::CacheEntryExists(item);
-
-  if (!found) {
-    return wxString::Format(wxT("Column %ld of item %ld not found"), column, item);
-  }
+  wxASSERT(GamesListView::CacheEntryExists(item));
 
   wxScidHashEntries::const_iterator it = hashEntries.find(item);
   ScidDatabaseEntry entry = it->second;
