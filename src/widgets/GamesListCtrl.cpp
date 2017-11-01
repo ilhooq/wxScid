@@ -11,6 +11,7 @@
 
 BEGIN_EVENT_TABLE(GamesListCtrl, wxListCtrl)
   EVT_LIST_CACHE_HINT(wxID_ANY, GamesListCtrl::OnCacheHint)
+  EVT_LIST_ITEM_ACTIVATED(wxID_ANY, GamesListCtrl::OnActivated)
 END_EVENT_TABLE()
 
 GamesListCtrl::GamesListCtrl(wxWindow *parent, const wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
@@ -57,6 +58,14 @@ GamesListCtrl::GamesListCtrl(wxWindow *parent, const wxWindowID id, const wxPoin
 
   dbHandle = 0;
   scid = NULL;
+}
+
+// Called on double click or when pressed ENTER on a row
+void GamesListCtrl::OnActivated(wxListEvent &event)
+{
+  wxASSERT(GamesListCtrl::CacheEntryExists(event.GetIndex()));
+  ScidDatabaseEntry entry = hashEntries[event.GetIndex()];
+  wxLogMessage(wxT("White: %s"), entry.white_name);
 }
 
 // This function is called during the window OnPaint event
