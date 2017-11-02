@@ -7,6 +7,7 @@ bin_PROGRAMS=wxscid
 wxscid_SOURCES= \
 	App.cpp \
 	MainFrame.cpp \
+	events.cpp \
 	widgets/ChessBoard.cpp \
 	widgets/GamesListCtrl.cpp \
 	widgets/GameTxtCtrl.cpp

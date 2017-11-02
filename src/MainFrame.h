@@ -12,9 +12,11 @@
 
 class MainFrame: public wxFrame
 {
+public:
   enum
   {
-    ID_Settings = wxID_HIGHEST + 1,
+    ID = wxID_HIGHEST + 1, // Mainframe id
+    ID_Settings,
     ID_CustomizeToolbar,
     ID_Toolbar,
     ID_FLIPBOARD,
@@ -26,7 +28,7 @@ class MainFrame: public wxFrame
 
     ID_FirstPerspective = ID_CreatePerspective + 1000
   };
-public:
+
   MainFrame(wxWindow* parent,
     wxWindowID id,
     const wxString& title,
@@ -41,7 +43,9 @@ public:
 private:
   wxAuiManager auiManager;
   void OnExit(wxCommandEvent& evt);
-  void OpenDatabase(wxCommandEvent& evt);
+  void OnOpenDatabaseDialog(wxCommandEvent& evt);
+  void OnListGames(wxCommandEvent& evt);
+  void OnOpenDatabase(wxCommandEvent& evt);
 
 protected:
   ChessBoard* board;

@@ -8,51 +8,15 @@
 #define WIDGETS_GAMESLISTVIEW_H_
 
 #include <wx/listctrl.h>
-
-#include "scid/scid.h"
-
-// Declare a hash map with int keys and ScidDatabaseEntry* values
-WX_DECLARE_HASH_MAP( int, ScidDatabaseEntry, wxIntegerHash, wxIntegerEqual, wxScidHashEntries);
-
-class ListGamesEventHandler : public ScidListEventHandler
-{
-public:
-  ListGamesEventHandler(unsigned int count)
-  {
-    entries = new ScidDatabaseEntry[count];
-    entriesStart = entries;
-  }
-
-  ~ListGamesEventHandler()
-  {
-    delete[] entries;
-  }
-
-  void onListGetEntry(ScidDatabaseEntry entry)
-  {
-    *(entriesStart++) = entry;
-  }
-
-  ScidDatabaseEntry* getEntries()
-  {
-    return entries;
-  }
-
-private:
-  ScidDatabaseEntry *entries;
-  ScidDatabaseEntry *entriesStart;
-};
+#include "database.h"
 
 class GamesListCtrl : public wxListCtrl
 {
 public:
   GamesListCtrl(wxWindow *parent, const wxWindowID id, const wxPoint& pos, const wxSize& size, long style);
 
-  int dbHandle;
-  Scid *scid;
-
 private:
-  wxScidHashEntries hashEntries;
+  HashGameEntries hashEntries;
   void OnCacheHint(wxListEvent &event);
   void OnActivated(wxListEvent &event);
   bool CacheEntryExists(const long item) const;

@@ -4,12 +4,9 @@
  *  Created on: 27 oct. 2017
  */
 
-#include <wx/log.h>
-#include <wx/string.h>
-
-#include "scid/scid.h"
 #include "GamesListCtrl.h"
-
+#include "events.h"
+#include "database.h"
 
 BEGIN_EVENT_TABLE(GamesListCtrl, wxListCtrl)
   EVT_LIST_CACHE_HINT(wxID_ANY, GamesListCtrl::OnCacheHint)
@@ -57,9 +54,6 @@ GamesListCtrl::GamesListCtrl(wxWindow *parent, const wxWindowID id, const wxPoin
   SetColumnWidth(6, 200);
 
   EnableAlternateRowColours();
-
-  dbHandle = 0;
-  scid = NULL;
 }
 
 // Called on double click or when pressed ENTER on a row
@@ -73,9 +67,8 @@ void GamesListCtrl::OnActivated(wxListEvent &event)
 // This function is called during the window OnPaint event
 void GamesListCtrl::OnCacheHint(wxListEvent& event)
 {
+
   if (hashEntries.size() > 100000) {
-    // sizeof ScidDatabaseEntry = 184 bytes
-    // 100000 entries = 18.4 Mbytes
     hashEntries.clear();
   }
 
@@ -89,39 +82,39 @@ void GamesListCtrl::OnCacheHint(wxListEvent& event)
   // Add padding to retrieve more items in the cache
   count += 100;
 
-  ListGamesEventHandler eventHandler(count);
-
-  scid->listGames(dbHandle, "d+", "dbfilter", &eventHandler, event.GetCacheFrom(), count);
-
-  ScidDatabaseEntry *entries = eventHandler.getEntries();
-
-  for (int i=0, item = event.GetCacheFrom(); i < count; i++, item++) {
-    hashEntries[item] = *(entries+i);
-  }
+  // Trigger an event to populate hashEntries outside the widget
+  wxCommandEvent eventList(EVT_LISTGAMES_REQUEST, GetId());
+  eventList.SetEventObject(this);
+  ListGamesRequest data;
+  data.fromItem = event.GetCacheFrom();
+  data.count = count;
+  data.HashEntries = &hashEntries;
+  eventList.SetClientData(&data);
+  ProcessEvent(eventList);
 }
 
 wxString GamesListCtrl::OnGetItemText(long item, long column) const
 {
   wxASSERT(GamesListCtrl::CacheEntryExists(item));
 
-  wxScidHashEntries::const_iterator it = hashEntries.find(item);
-  ScidDatabaseEntry entry = it->second;
+  HashGameEntries::const_iterator it = hashEntries.find(item);
+  GameEntry entry = it->second;
 
   switch(column) {
     case 0:
-      return (wxString) entry.date;
+      return entry.date;
     case 1:
-      return (wxString) entry.result;
+      return entry.result;
     case 2:
-      return wxString::FromUTF8(entry.white_name.c_str());
+      return entry.whiteName;
     case 3:
-      return (wxString) entry.white_elo;
+      return entry.whiteElo;
     case 4:
-      return wxString::FromUTF8(entry.black_name.c_str());
+      return entry.blackName;
     case 5:
-      return (wxString) entry.black_elo;
+      return entry.blackElo;
     case 6:
-      return (wxString) entry.first_moves;
+      return entry.firstMoves;
   }
 
   return wxString("Unknown column");
@@ -129,6 +122,6 @@ wxString GamesListCtrl::OnGetItemText(long item, long column) const
 
 bool GamesListCtrl::CacheEntryExists(long item) const
 {
-  wxScidHashEntries::const_iterator it = hashEntries.find(item);
+  HashGameEntries::const_iterator it = hashEntries.find(item);
   return (it != hashEntries.end());
 }

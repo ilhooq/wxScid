@@ -8,6 +8,7 @@
 #include <wx/stdpaths.h>
 
 #include "App.h"
+#include "database.h"
 #include "MainFrame.h"
 
 bool App::OnInit()
@@ -25,13 +26,31 @@ bool App::OnInit()
     return false;
   }
 
+  currentDbHandle = 0;
   scid = new Scid();
 
-  frame = new MainFrame(NULL, wxID_ANY, _T("WxScid"), wxDefaultPosition, wxSize(800, 600));
+  frame = new MainFrame(NULL, MainFrame::ID, _T("WxScid"), wxDefaultPosition, wxSize(800, 600));
   frame->Show(true);
   SetTopWindow(frame);
 
   return true;
+}
+
+DbInfos App::OpenDatabase(wxString path)
+{
+  try {
+    currentDbHandle = scid->openDatabase(path.c_str());
+  } catch(ScidError &error) {
+    wxLogError(wxT("Error : %s - code : %d.\n"), error.what(), error.getCode());
+    currentDbHandle = 0;
+  }
+
+  DbInfos infos;
+  infos.handle = currentDbHandle;
+  infos.gamesNumber = scid->numGames(currentDbHandle);
+  infos.path = path;
+
+  return infos;
 }
 
 wxString App::getDataDir()

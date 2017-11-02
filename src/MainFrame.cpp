@@ -12,6 +12,8 @@
 #include "widgets/ChessBoard.h"
 #include "widgets/GamesListCtrl.h"
 #include "widgets/GameTxtCtrl.h"
+#include "database.h"
+#include "events.h"
 #include "App.h"
 #include "MainFrame.h"
 #include "Squares.h"
@@ -34,8 +36,11 @@ MainFrame::MainFrame(
 
   // Binds events dynamically
   Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OnExit, this, wxID_EXIT);
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OpenDatabase, this, XRCID("open_database"));
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OnOpenDatabaseDialog, this, XRCID("open_database"));
   Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::flipBoard, this, MainFrame::ID_FLIPBOARD);
+
+  Bind(EVT_OPEN_DATABASE, &MainFrame::OnOpenDatabase, this);
+  Bind(EVT_LISTGAMES_REQUEST, &MainFrame::OnListGames, this, ID_GAMES_LIST_VIEW);
 
   // Tell wxAuiManager to manage this frame
   auiManager.SetManagedWindow(this);
@@ -151,17 +156,33 @@ MainFrame::MainFrame(
       .MinimizeButton(true)
   );
 
-  GamesListCtrl* listView = new GamesListCtrl(gamesList, ID_GAMES_LIST_VIEW, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_VIRTUAL);
+  GamesListCtrl* listCtrl = new GamesListCtrl(gamesList, ID_GAMES_LIST_VIEW, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_VIRTUAL);
 
   wxSizer *listSizer = new wxBoxSizer(wxHORIZONTAL);
-  listSizer->Add(listView, 1, wxEXPAND);
+  listSizer->Add(listCtrl, 1, wxEXPAND);
   gamesList->SetSizerAndFit(listSizer);
 
   // "Commit" all changes made to wxAuiManager
   auiManager.Update();
 }
 
-void MainFrame::OpenDatabase(wxCommandEvent& WXUNUSED(evt))
+
+void MainFrame::OnOpenDatabase(wxCommandEvent& evt)
+{
+  DbInfos *infos = (DbInfos*) evt.GetClientData();
+  wxPrintf(wxT("Games num: %d \n"), infos->gamesNumber);
+  GamesListCtrl * listCtrl = (GamesListCtrl *) wxWindow::FindWindowById(ID_GAMES_LIST_VIEW);
+  listCtrl->SetItemCount(infos->gamesNumber);
+}
+
+void MainFrame::OnListGames(wxCommandEvent& evt)
+{
+  ListGamesRequest *data = (ListGamesRequest*) evt.GetClientData();
+  HashGamesPopulator populator(data->HashEntries, data->fromItem);
+  wxGetApp().scid->listGames(wxGetApp().currentDbHandle, "d+", "dbfilter", &populator, data->fromItem, data->count);
+}
+
+void MainFrame::OnOpenDatabaseDialog(wxCommandEvent& WXUNUSED(evt))
 {
   wxFileDialog* OpenDialog = new wxFileDialog (
    this,
@@ -177,16 +198,13 @@ void MainFrame::OpenDatabase(wxCommandEvent& WXUNUSED(evt))
   {
     wxString path = OpenDialog->GetPath();
 
-    try {
-      int dbHandle = wxGetApp().scid->openDatabase(path.c_str());
-      GamesListCtrl * listCtrl = (GamesListCtrl *) wxWindow::FindWindowById(ID_GAMES_LIST_VIEW);
-      listCtrl->SetItemCount((long) wxGetApp().scid->numGames(dbHandle));
-      listCtrl->dbHandle = dbHandle;
-      listCtrl->scid = wxGetApp().scid;
-    } catch(ScidError &error) {
-      wxMessageOutputStderr err;
-      err.Printf(wxT("Error : %s - code : %d.\n"), error.what(), error.getCode());
-    }
+    DbInfos infos = wxGetApp().OpenDatabase(path);
+
+    // Trigger the open database event
+    wxCommandEvent evt(EVT_OPEN_DATABASE, wxID_ANY);
+    evt.SetEventObject(this);
+    evt.SetClientData(&infos);
+    ProcessWindowEvent(evt);
 
     SetTitle(wxString("Database - ") << OpenDialog->GetFilename()); // Set the Title to reflect the file open
   }
