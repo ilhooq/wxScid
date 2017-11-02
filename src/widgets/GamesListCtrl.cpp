@@ -60,8 +60,8 @@ GamesListCtrl::GamesListCtrl(wxWindow *parent, const wxWindowID id, const wxPoin
 void GamesListCtrl::OnActivated(wxListEvent &event)
 {
   wxASSERT(GamesListCtrl::CacheEntryExists(event.GetIndex()));
-  ScidDatabaseEntry entry = hashEntries[event.GetIndex()];
-  wxLogMessage(wxT("White: %s"), entry.white_name);
+  GameEntry entry = hashEntries[event.GetIndex()];
+  wxPrintf(wxT("White: %s\n"), entry.whiteName);
 }
 
 // This function is called during the window OnPaint event
@@ -90,7 +90,7 @@ void GamesListCtrl::OnCacheHint(wxListEvent& event)
   data.count = count;
   data.HashEntries = &hashEntries;
   eventList.SetClientData(&data);
-  ProcessEvent(eventList);
+  ProcessWindowEvent(eventList);
 }
 
 wxString GamesListCtrl::OnGetItemText(long item, long column) const
