@@ -71,6 +71,7 @@ public:
     entry.blackName  =  wxString::FromUTF8(scidEntry.black_name.c_str());
     entry.blackElo   = (wxString) scidEntry.black_elo;
     entry.firstMoves = (wxString) scidEntry.first_moves;
+    entry.index      = scidEntry.index;
 
     (*m_hashEntries)[m_fromItem++] = entry;
   }

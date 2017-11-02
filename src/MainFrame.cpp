@@ -40,6 +40,7 @@ MainFrame::MainFrame(
   Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::flipBoard, this, MainFrame::ID_FLIPBOARD);
 
   Bind(EVT_LISTGAMES_REQUEST, &MainFrame::OnListGames, this, ID_GAMES_LIST_VIEW);
+  Bind(EVT_OPEN_DATABASE_ENTRY_REQUEST, &MainFrame::LoadGame, this, ID_GAMES_LIST_VIEW);
 
   // Tell wxAuiManager to manage this frame
   auiManager.SetManagedWindow(this);
@@ -170,6 +171,12 @@ void MainFrame::OnListGames(wxCommandEvent& evt)
   ListGamesRequest *data = (ListGamesRequest*) evt.GetClientData();
   HashGamesPopulator populator(data->HashEntries, data->fromItem);
   wxGetApp().scid->listGames(wxGetApp().currentDbHandle, "d+", "dbfilter", &populator, data->fromItem, data->count);
+}
+
+void MainFrame::LoadGame(wxCommandEvent& evt)
+{
+  GameEntry *entry = (GameEntry*) evt.GetClientData();
+  wxPrintf(wxT("Entry opened: %d\n"), entry->index);
 }
 
 void MainFrame::OnOpenDatabaseDialog(wxCommandEvent& WXUNUSED(evt))

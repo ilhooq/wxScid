@@ -63,6 +63,12 @@ void GamesListCtrl::OnActivated(wxListEvent &event)
   wxASSERT(GamesListCtrl::CacheEntryExists(event.GetIndex()));
   GameEntry entry = hashEntries[event.GetIndex()];
   wxPrintf(wxT("White: %s\n"), entry.whiteName);
+
+  wxWindow *win = (wxWindow*) this;
+  wxCommandEvent evt(EVT_OPEN_DATABASE_ENTRY_REQUEST, win->GetId());
+  evt.SetEventObject(this);
+  evt.SetClientData(&entry);
+  win->ProcessWindowEvent(evt);
 }
 
 // This function is called during the window OnPaint event

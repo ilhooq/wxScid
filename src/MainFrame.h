@@ -45,6 +45,7 @@ private:
   void OnExit(wxCommandEvent& evt);
   void OnOpenDatabaseDialog(wxCommandEvent& evt);
   void OnListGames(wxCommandEvent& evt);
+  void LoadGame(wxCommandEvent& evt);
 
 protected:
   ChessBoard* board;
