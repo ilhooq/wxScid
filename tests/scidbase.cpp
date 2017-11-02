@@ -7,10 +7,10 @@ using namespace std;
 class TestListEventHandler : public ScidListEventHandler
 {
 public:
-  void onListGetEntry(ScidDatabaseEntry& entry);
+  void onListGetEntry(ScidDatabaseEntry entry);
 };
 
-void TestListEventHandler::onListGetEntry(ScidDatabaseEntry& entry)
+void TestListEventHandler::onListGetEntry(ScidDatabaseEntry entry)
 {
   cout << "White player : "    << (string) entry.white_name
        << " - Black player : " << (string) entry.black_name
