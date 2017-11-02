@@ -95,9 +95,13 @@ void GamesListCtrl::OnCacheHint(wxListEvent& event)
 
 wxString GamesListCtrl::OnGetItemText(long item, long column) const
 {
-  wxASSERT(GamesListCtrl::CacheEntryExists(item));
-
   HashGameEntries::const_iterator it = hashEntries.find(item);
+
+  if (it == hashEntries.end()) {
+    // Entry not found
+    return wxString("Error");
+  }
+
   GameEntry entry = it->second;
 
   switch(column) {
