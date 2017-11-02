@@ -11,6 +11,7 @@
 BEGIN_EVENT_TABLE(GamesListCtrl, wxListCtrl)
   EVT_LIST_CACHE_HINT(wxID_ANY, GamesListCtrl::OnCacheHint)
   EVT_LIST_ITEM_ACTIVATED(wxID_ANY, GamesListCtrl::OnActivated)
+  EVT_COMMAND (wxID_ANY, EVT_OPEN_DATABASE, GamesListCtrl::OnOpenDatabase)
 END_EVENT_TABLE()
 
 GamesListCtrl::GamesListCtrl(wxWindow *parent, const wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
@@ -83,14 +84,16 @@ void GamesListCtrl::OnCacheHint(wxListEvent& event)
   count += 100;
 
   // Trigger an event to populate hashEntries outside the widget
-  wxCommandEvent eventList(EVT_LISTGAMES_REQUEST, GetId());
+  wxWindow *win = (wxWindow*) this;
+
+  wxCommandEvent eventList(EVT_LISTGAMES_REQUEST, win->GetId());
   eventList.SetEventObject(this);
   ListGamesRequest data;
   data.fromItem = event.GetCacheFrom();
   data.count = count;
   data.HashEntries = &hashEntries;
   eventList.SetClientData(&data);
-  ProcessWindowEvent(eventList);
+  win->ProcessWindowEvent(eventList);
 }
 
 wxString GamesListCtrl::OnGetItemText(long item, long column) const
@@ -128,4 +131,11 @@ bool GamesListCtrl::CacheEntryExists(long item) const
 {
   HashGameEntries::const_iterator it = hashEntries.find(item);
   return (it != hashEntries.end());
+}
+
+void GamesListCtrl::OnOpenDatabase(wxCommandEvent& evt)
+{
+  DbInfos *infos = (DbInfos*) evt.GetClientData();
+  wxPrintf(wxT("Games num: %d \n"), infos->gamesNumber);
+  SetItemCount(infos->gamesNumber);
 }

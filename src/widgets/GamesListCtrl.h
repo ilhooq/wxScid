@@ -19,6 +19,7 @@ private:
   HashGameEntries hashEntries;
   void OnCacheHint(wxListEvent &event);
   void OnActivated(wxListEvent &event);
+  void OnOpenDatabase(wxCommandEvent& evt);
   bool CacheEntryExists(const long item) const;
   virtual wxString OnGetItemText(long item, long column) const;
 wxDECLARE_EVENT_TABLE();
