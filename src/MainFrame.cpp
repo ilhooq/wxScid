@@ -198,7 +198,8 @@ void MainFrame::OnOpenDatabaseDialog(wxCommandEvent& WXUNUSED(evt))
 void MainFrame::OnOpenDatabase(wxCommandEvent& evt)
 {
   DbInfos *infos = (DbInfos*) evt.GetClientData();
-  SetTitle(wxString("Database - ") << infos->path); // Set the Title to reflect the file open
+  // Set the Title to reflect the file open
+  SetTitle(wxString::Format(wxT("WxScid - %s (%d games)"), infos->name,  infos->numGames));
   wxWindow * listCtrl = (wxWindow *) wxWindow::FindWindowById(ID_GAMES_LIST_VIEW);
   listCtrl->ProcessWindowEvent(evt);
 }

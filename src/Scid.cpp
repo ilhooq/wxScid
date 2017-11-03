@@ -2,12 +2,14 @@
  * Scid.cpp
  *
  */
+#include <wx/filename.h>
 
 #include "scid/scidbase.h"
 #include "scid/dbasepool.h"
+#include "database.h"
 #include "Scid.h"
 #include "events.h"
-#include "database.h"
+
 
 BEGIN_EVENT_TABLE(Scid, wxEvtHandler)
 EVT_COMMAND (wxID_ANY, EVT_OPEN_DATABASE_REQUEST, Scid::openDatabase)
@@ -73,8 +75,11 @@ void Scid::openDatabase(wxCommandEvent& evt)
 
   DbInfos infos;
   infos.handle = currentDbHandle;
-  infos.gamesNumber = dbase->numGames();
+  infos.numGames = dbase->numGames();
   infos.path = path;
+
+  wxFileName fname((wxString) dbase->getFileName());
+  infos.name = fname.GetName();
 
   wxCommandEvent event(EVT_OPEN_DATABASE, wxID_ANY);
   event.SetEventObject(this);
@@ -85,11 +90,10 @@ void Scid::openDatabase(wxCommandEvent& evt)
 void Scid::OnListGames(wxCommandEvent& evt)
 {
   ListGamesRequest *data = (ListGamesRequest*) evt.GetClientData();
-  HashGamesPopulator populator(data->HashEntries, data->fromItem);
-  listGames(currentDbHandle, "d+", "dbfilter", &populator, data->fromItem, data->count);
+  listGames(currentDbHandle, "d+", "dbfilter", data->HashEntries, data->fromItem, data->count);
 }
 
-void Scid::listGames(int baseHandle, const char* ordering, const char* filterId, ScidListEventHandler* eventHandler, unsigned int start, unsigned int count)
+void Scid::listGames(int baseHandle, const char* ordering, const char* filterId, HashGameEntries* hashEntries, unsigned int start, unsigned int count)
 {
   scidBaseT* dbase = DBasePool::getBase(baseHandle);
 
@@ -111,20 +115,20 @@ void Scid::listGames(int baseHandle, const char* ordering, const char* filterId,
   // The name base file in memory.
   const NameBase* nb = dbase->getNameBase();
 
-  for (uint i = 0; i < count; ++i) {
+  for (uint i = 0, item = start; i < count; ++i, item++) {
 
     uint idx = idxList[i];
-    ASSERT(filter->get(idx) != 0);
-    ScidDatabaseEntry entry;
+    wxASSERT(filter->get(idx) != 0);
+    GameEntry entry;
 
     uint ply = filter->get(idx) -1;
 
     const IndexEntry* ie = dbase->getIndexEntry(idx);
 
     entry.result = RESULT_STR[ie->GetResult()];
-    entry.moves_number = (ie->GetNumHalfMoves() + 1) / 2;
-    entry.white_name = ie->GetWhiteName(nb);
-    entry.black_name = ie->GetBlackName(nb);
+    entry.movesNumber = (ie->GetNumHalfMoves() + 1) / 2;
+    entry.whiteName = wxString::FromUTF8(ie->GetWhiteName(nb));
+    entry.blackName = wxString::FromUTF8(ie->GetBlackName(nb));
 
     std::string eloStr;
     eloT welo = ie->GetWhiteElo();
@@ -140,7 +144,7 @@ void Scid::listGames(int baseHandle, const char* ordering, const char* filterId,
       }
     }
 
-    entry.white_elo = eloStr;
+    entry.whiteElo = (wxString) eloStr;
 
     eloT belo = ie->GetBlackElo();
 
@@ -155,29 +159,43 @@ void Scid::listGames(int baseHandle, const char* ordering, const char* filterId,
       }
     }
 
-    entry.black_elo = eloStr;
+    entry.blackElo = (wxString) eloStr;
 
-    date_DecodeToString(ie->GetDate(), entry.date);
-    entry.event_name = ie->GetEventName(nb);
-    entry.round_name = ie->GetRoundName(nb);
-    entry.site_name = ie->GetSiteName(nb);
-    entry.nag_count = ie->GetNagCount();
-    entry.comment_count = ie->GetCommentCount();
-    entry.variation_count = ie->GetVariationCount();
-    entry.deleted_flag = ie->GetDeleteFlag();
-    ie->GetFlagStr (entry.flags, "WBMENPTKQ!?U123456");
-    eco_ToExtendedString(ie->GetEcoCode(), entry.eco);
-    entry.end_material = matsig_makeString(ie->GetFinalMatSig());
-    entry.start_flag = ie->GetStartFlag();
-    date_DecodeToString (ie->GetEventDate(), entry.event_date);
+    char date[16];
+    date_DecodeToString(ie->GetDate(), date);
+    entry.date = (wxString) date;
+
+    entry.eventName = (wxString) ie->GetEventName(nb);
+    entry.roundName = (wxString) ie->GetRoundName(nb);
+    entry.siteName  = (wxString) ie->GetSiteName(nb);
+    entry.nagCount = ie->GetNagCount();
+    entry.commentCount = ie->GetCommentCount();
+    entry.variationCount = ie->GetVariationCount();
+    entry.deletedFlag = ie->GetDeleteFlag();
+
+    char flags[16];
+    ie->GetFlagStr (flags, "WBMENPTKQ!?U123456");
+    entry.flags = (wxString) flags;
+
+    char eco[6];
+    eco_ToExtendedString(ie->GetEcoCode(), eco);
+    entry.eco = (wxString) eco;
+
+    entry.endMaterial = (wxString) matsig_makeString(ie->GetFinalMatSig());
+    entry.startFlag = ie->GetStartFlag();
+
+    char event_date[16];
+    date_DecodeToString (ie->GetEventDate(), event_date);
+    entry.eventDate =  (wxString) event_date;
+
     entry.year = ie->GetYear();
     entry.rating = ie->GetRating(nb);
     FastGame game = dbase->getGame(ie);
-    entry.first_moves = game.getMoveSAN(ply, 10);
+    entry.firstMoves = (wxString) game.getMoveSAN(ply, 10);
     entry.index = idx;
     entry.ply = ply;
 
-    eventHandler->onListGetEntry(entry);
+    (*hashEntries)[item] = entry;
   }
 
   delete [] idxList;

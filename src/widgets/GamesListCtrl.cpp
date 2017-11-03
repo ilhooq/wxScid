@@ -20,30 +20,31 @@ GamesListCtrl::GamesListCtrl(wxWindow *parent, const wxWindowID id, const wxPoin
   wxListItem itemCol;
   itemCol.SetText(wxT("Date"));
   itemCol.SetImage(-1);
+  itemCol.SetAlign(wxLIST_FORMAT_LEFT);
   InsertColumn(0, itemCol);
 
   itemCol.SetText(wxT("Result"));
-  itemCol.SetAlign(wxLIST_FORMAT_CENTRE);
+  itemCol.SetAlign(wxLIST_FORMAT_CENTER);
   InsertColumn(1, itemCol);
 
   itemCol.SetText(wxT("White"));
-  itemCol.SetAlign(wxLIST_FORMAT_CENTRE);
+  itemCol.SetAlign(wxLIST_FORMAT_LEFT);
   InsertColumn(2, itemCol);
 
   itemCol.SetText(wxT("W-Elo"));
-  itemCol.SetAlign(wxLIST_FORMAT_CENTRE);
+  itemCol.SetAlign(wxLIST_FORMAT_CENTER);
   InsertColumn(3, itemCol);
 
   itemCol.SetText(wxT("Black"));
-  itemCol.SetAlign(wxLIST_FORMAT_CENTRE);
+  itemCol.SetAlign(wxLIST_FORMAT_LEFT);
   InsertColumn(4, itemCol);
 
   itemCol.SetText(wxT("B-Elo"));
-  itemCol.SetAlign(wxLIST_FORMAT_CENTRE);
+  itemCol.SetAlign(wxLIST_FORMAT_CENTER);
   InsertColumn(5, itemCol);
 
   itemCol.SetText(wxT("Moves"));
-  itemCol.SetAlign(wxLIST_FORMAT_CENTRE);
+  itemCol.SetAlign(wxLIST_FORMAT_LEFT);
   InsertColumn(6, itemCol);
 
   SetColumnWidth(0, 150);
@@ -142,6 +143,5 @@ bool GamesListCtrl::CacheEntryExists(long item) const
 void GamesListCtrl::OnOpenDatabase(wxCommandEvent& evt)
 {
   DbInfos *infos = (DbInfos*) evt.GetClientData();
-  wxPrintf(wxT("Games num: %d \n"), infos->gamesNumber);
-  SetItemCount(infos->gamesNumber);
+  SetItemCount(infos->numGames);
 }
