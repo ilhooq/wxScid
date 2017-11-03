@@ -154,7 +154,7 @@ MainFrame::MainFrame(
       .MinimizeButton(true)
   );
 
-  GamesListCtrl* listCtrl = new GamesListCtrl(gamesList, ID_GAMES_LIST_VIEW, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_VIRTUAL);
+  GamesListCtrl* listCtrl = new GamesListCtrl(gamesList, ID_GAMES_LIST_VIEW);
 
   wxSizer *listSizer = new wxBoxSizer(wxHORIZONTAL);
   listSizer->Add(listCtrl, 1, wxEXPAND);

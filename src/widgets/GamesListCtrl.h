@@ -13,7 +13,11 @@
 class GamesListCtrl : public wxListCtrl
 {
 public:
-  GamesListCtrl(wxWindow *parent, const wxWindowID id, const wxPoint& pos, const wxSize& size, long style);
+  GamesListCtrl(wxWindow *parent,
+                const wxWindowID id,
+                const wxPoint& pos = wxDefaultPosition,
+                const wxSize& size = wxDefaultSize,
+                long style = wxLC_REPORT|wxLC_VIRTUAL);
 
 private:
   HashGameEntries hashEntries;
