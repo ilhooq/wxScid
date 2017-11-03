@@ -10,6 +10,7 @@
 #include "App.h"
 #include "database.h"
 #include "MainFrame.h"
+#include "Scid.h"
 
 bool App::OnInit()
 {
@@ -26,16 +27,20 @@ bool App::OnInit()
     return false;
   }
 
-  currentDbHandle = 0;
-  scid = new Scid();
+  //currentDbHandle = 0;
+  //scid = new Scid();
 
   frame = new MainFrame(NULL, MainFrame::ID, _T("WxScid"), wxDefaultPosition, wxSize(800, 600));
   frame->Show(true);
+
+  frame->PushEventHandler(new Scid);
+
   SetTopWindow(frame);
 
   return true;
 }
 
+/*
 DbInfos App::OpenDatabase(wxString path)
 {
   try {
@@ -52,6 +57,7 @@ DbInfos App::OpenDatabase(wxString path)
 
   return infos;
 }
+*/
 
 wxString App::getDataDir()
 {

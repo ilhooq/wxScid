@@ -8,7 +8,6 @@
 #include <wx/aui/aui.h>
 #include <wx/filedlg.h>
 
-#include "scid/scid.h"
 #include "widgets/ChessBoard.h"
 #include "widgets/GamesListCtrl.h"
 #include "widgets/GameTxtCtrl.h"
@@ -39,8 +38,7 @@ MainFrame::MainFrame(
   Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OnOpenDatabaseDialog, this, XRCID("open_database"));
   Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::flipBoard, this, MainFrame::ID_FLIPBOARD);
 
-  Bind(EVT_LISTGAMES_REQUEST, &MainFrame::OnListGames, this, ID_GAMES_LIST_VIEW);
-  Bind(EVT_OPEN_DATABASE_ENTRY_REQUEST, &MainFrame::LoadGame, this, ID_GAMES_LIST_VIEW);
+  Bind(EVT_OPEN_DATABASE, &MainFrame::OnOpenDatabase, this);
 
   // Tell wxAuiManager to manage this frame
   auiManager.SetManagedWindow(this);
@@ -166,13 +164,6 @@ MainFrame::MainFrame(
   auiManager.Update();
 }
 
-void MainFrame::OnListGames(wxCommandEvent& evt)
-{
-  ListGamesRequest *data = (ListGamesRequest*) evt.GetClientData();
-  HashGamesPopulator populator(data->HashEntries, data->fromItem);
-  wxGetApp().scid->listGames(wxGetApp().currentDbHandle, "d+", "dbfilter", &populator, data->fromItem, data->count);
-}
-
 void MainFrame::LoadGame(wxCommandEvent& evt)
 {
   GameEntry *entry = (GameEntry*) evt.GetClientData();
@@ -195,20 +186,21 @@ void MainFrame::OnOpenDatabaseDialog(wxCommandEvent& WXUNUSED(evt))
   {
     wxString path = OpenDialog->GetPath();
 
-    DbInfos infos = wxGetApp().OpenDatabase(path);
-
-    // Trigger the open database event
-    wxCommandEvent evt(EVT_OPEN_DATABASE, wxID_ANY);
+    wxCommandEvent evt(EVT_OPEN_DATABASE_REQUEST, wxID_ANY);
     evt.SetEventObject(this);
-    evt.SetClientData(&infos);
+    evt.SetString(path);
     ProcessWindowEvent(evt);
-    wxWindow * listCtrl = (wxWindow *) wxWindow::FindWindowById(ID_GAMES_LIST_VIEW);
-    listCtrl->ProcessWindowEvent(evt);
-
-    SetTitle(wxString("Database - ") << OpenDialog->GetFilename()); // Set the Title to reflect the file open
   }
 
   OpenDialog->Destroy();
+}
+
+void MainFrame::OnOpenDatabase(wxCommandEvent& evt)
+{
+  DbInfos *infos = (DbInfos*) evt.GetClientData();
+  SetTitle(wxString("Database - ") << infos->path); // Set the Title to reflect the file open
+  wxWindow * listCtrl = (wxWindow *) wxWindow::FindWindowById(ID_GAMES_LIST_VIEW);
+  listCtrl->ProcessWindowEvent(evt);
 }
 
 void MainFrame::OnExit(wxCommandEvent & WXUNUSED(evt))
@@ -224,6 +216,8 @@ void MainFrame::flipBoard(wxCommandEvent & WXUNUSED(evt))
 
 MainFrame::~MainFrame()
 {
+  // Remove Scid EvntHandler
+  PopEventHandler(true);
   auiManager.UnInit();
 }
 

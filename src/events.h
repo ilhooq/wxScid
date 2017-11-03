@@ -7,7 +7,8 @@
 #define EVENTS_H_
 
 #include <wx/event.h>
-#include "widgets/GamesListCtrl.h"
+
+wxDECLARE_EVENT(EVT_OPEN_DATABASE_REQUEST, wxCommandEvent);
 wxDECLARE_EVENT(EVT_OPEN_DATABASE, wxCommandEvent);
 wxDECLARE_EVENT(EVT_LISTGAMES_REQUEST, wxCommandEvent);
 wxDECLARE_EVENT(EVT_OPEN_DATABASE_ENTRY_REQUEST, wxCommandEvent);

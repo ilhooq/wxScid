@@ -7,7 +7,7 @@ ACLOCAL_AMFLAGS = -I m4
 lib_LTLIBRARIES = libscid.la
 
 # Sources for libscid
-libscid_la_SOURCES = scid.cpp \
+libscid_la_SOURCES = \
 	scidbase.cpp \
 	bytebuf.cpp \
 	dbasepool.cpp \

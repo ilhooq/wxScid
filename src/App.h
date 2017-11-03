@@ -7,15 +7,15 @@
 #define APP_H_
 
 #include <wx/app.h>
-#include "scid/scid.h"
+// #include "scid/scid.h"
 #include "database.h"
 
 class App: public wxApp
 {
 public:
   wxFrame *frame;
-  Scid* scid;
-  int currentDbHandle;
+  // Scid* scid;
+  //int currentDbHandle;
 
   virtual bool OnInit();
   static wxString getDataDir();

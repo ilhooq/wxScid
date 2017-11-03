@@ -8,7 +8,8 @@
 
 #include <wx/string.h>
 #include <wx/hashmap.h>
-#include "scid/scid.h"
+// #include "scid/scid.h"
+#include "Scid.h"
 
 struct DbInfos
 {
