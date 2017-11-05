@@ -25,201 +25,200 @@ MainFrame::MainFrame(
   const wxSize& size,
   long style) : wxFrame(parent, id, title, pos, size, style)
 {
-  wxString dataDir = App::getDataDir();
+    wxString dataDir = App::getDataDir();
 
-  // Set frame icon
-  SetIcon(wxIcon(dataDir + "/icons/scid.ico"));
+    // Set frame icon
+    SetIcon(wxIcon(dataDir + "/icons/scid.ico"));
 
-  // Load the menubar from XRC
-  SetMenuBar(wxXmlResource::Get()->LoadMenuBar(wxT("mainmenu")));
+    // Load the menubar from XRC
+    SetMenuBar(wxXmlResource::Get()->LoadMenuBar(wxT("mainmenu")));
 
-  // Binds events dynamically
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OnExit, this, wxID_EXIT);
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OnOpenDatabaseDialog, this, XRCID("open_database"));
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::flipBoard, this, MainFrame::ID_FLIPBOARD);
+    // Binds events dynamically
+    Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OnExit, this, wxID_EXIT);
+    Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OnOpenDatabaseDialog, this, XRCID("open_database"));
+    Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::flipBoard, this, MainFrame::ID_FLIPBOARD);
 
-  Bind(EVT_OPEN_DATABASE, &MainFrame::OnOpenDatabase, this);
-  Bind(EVT_GAME_LOADED, &MainFrame::OnGameLoaded, this);
+    Bind(EVT_OPEN_DATABASE, &MainFrame::OnOpenDatabase, this);
+    Bind(EVT_GAME_LOADED, &MainFrame::OnGameLoaded, this);
 
-  // Tell wxAuiManager to manage this frame
-  auiManager.SetManagedWindow(this);
+    // Tell wxAuiManager to manage this frame
+    auiManager.SetManagedWindow(this);
 
-  // Customize AUI look
-  wxAuiDockArt* artProvider = auiManager.GetArtProvider();
-  artProvider->SetMetric(wxAUI_DOCKART_SASH_SIZE, 1);
-  artProvider->SetMetric(wxAUI_DOCKART_CAPTION_SIZE, 24);
-  artProvider->SetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE, 0);
-  artProvider->SetMetric(wxAUI_DOCKART_PANE_BUTTON_SIZE, 16);
-  artProvider->SetMetric(wxAUI_DOCKART_GRADIENT_TYPE, wxAUI_GRADIENT_NONE);
+    // Customize AUI look
+    wxAuiDockArt* artProvider = auiManager.GetArtProvider();
+    artProvider->SetMetric(wxAUI_DOCKART_SASH_SIZE, 1);
+    artProvider->SetMetric(wxAUI_DOCKART_CAPTION_SIZE, 24);
+    artProvider->SetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE, 0);
+    artProvider->SetMetric(wxAUI_DOCKART_PANE_BUTTON_SIZE, 16);
+    artProvider->SetMetric(wxAUI_DOCKART_GRADIENT_TYPE, wxAUI_GRADIENT_NONE);
 
-  // Toolbar
-  // prepare a few custom overflow elements for the toolbars' overflow buttons
-  wxAuiToolBarItemArray prepend_items;
-  wxAuiToolBarItemArray append_items;
-  wxAuiToolBarItem item;
+    // Toolbar
+    // prepare a few custom overflow elements for the toolbars' overflow buttons
+    wxAuiToolBarItemArray prepend_items;
+    wxAuiToolBarItemArray append_items;
+    wxAuiToolBarItem item;
 
-  item.SetKind(wxITEM_SEPARATOR);
-  append_items.Add(item);
+    item.SetKind(wxITEM_SEPARATOR);
+    append_items.Add(item);
 
-  item.SetKind(wxITEM_NORMAL);
-  item.SetId(ID_CustomizeToolbar);
-  item.SetLabel(_("Customize..."));
-  append_items.Add(item);
+    item.SetKind(wxITEM_NORMAL);
+    item.SetId(ID_CustomizeToolbar);
+    item.SetLabel(_("Customize..."));
+    append_items.Add(item);
 
-  wxAuiToolBar* toolbar = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-      wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW | wxAUI_TB_HORIZONTAL);
-  toolbar->SetToolBitmapSize(wxSize(48, 48));
+    wxAuiToolBar* toolbar = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+            wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW | wxAUI_TB_HORIZONTAL);
+    toolbar->SetToolBitmapSize(wxSize(48, 48));
 
-  wxBitmap toolbar_bmp1 = wxArtProvider::GetBitmap(wxART_QUESTION, wxART_OTHER, wxSize(16, 16));
-  wxBitmap flip_bmp = wxImage(dataDir + "/icons/flip.png");
+    wxBitmap toolbar_bmp1 = wxArtProvider::GetBitmap(wxART_QUESTION, wxART_OTHER, wxSize(16, 16));
+    wxBitmap flip_bmp = wxImage(dataDir + "/icons/flip.png");
 
-  toolbar->AddTool(ID_Toolbar + 1, wxT("Disabled"), toolbar_bmp1);
-  toolbar->AddTool(ID_FLIPBOARD, wxT("Flip board"), flip_bmp);
-  toolbar->AddTool(ID_Toolbar + 8, wxT("Test"), toolbar_bmp1);
-  toolbar->AddTool(ID_Toolbar + 9, wxT("Test"), toolbar_bmp1);
-  toolbar->AddSeparator();
-  toolbar->AddTool(ID_Toolbar + 10, wxT("Test"), toolbar_bmp1);
-  toolbar->AddTool(ID_Toolbar + 11, wxT("Test"), toolbar_bmp1);
-  toolbar->AddSeparator();
-  toolbar->AddTool(ID_Toolbar + 12, wxT("Test"), toolbar_bmp1);
-  toolbar->AddTool(ID_Toolbar + 13, wxT("Test"), toolbar_bmp1);
-  toolbar->AddTool(ID_Toolbar + 14, wxT("Test"), toolbar_bmp1);
-  toolbar->AddTool(ID_Toolbar + 15, wxT("Test"), toolbar_bmp1);
-  toolbar->SetCustomOverflowItems(prepend_items, append_items);
-  toolbar->Realize();
+    toolbar->AddTool(ID_Toolbar + 1, wxT("Disabled"), toolbar_bmp1);
+    toolbar->AddTool(ID_FLIPBOARD, wxT("Flip board"), flip_bmp);
+    toolbar->AddTool(ID_Toolbar + 8, wxT("Test"), toolbar_bmp1);
+    toolbar->AddTool(ID_Toolbar + 9, wxT("Test"), toolbar_bmp1);
+    toolbar->AddSeparator();
+    toolbar->AddTool(ID_Toolbar + 10, wxT("Test"), toolbar_bmp1);
+    toolbar->AddTool(ID_Toolbar + 11, wxT("Test"), toolbar_bmp1);
+    toolbar->AddSeparator();
+    toolbar->AddTool(ID_Toolbar + 12, wxT("Test"), toolbar_bmp1);
+    toolbar->AddTool(ID_Toolbar + 13, wxT("Test"), toolbar_bmp1);
+    toolbar->AddTool(ID_Toolbar + 14, wxT("Test"), toolbar_bmp1);
+    toolbar->AddTool(ID_Toolbar + 15, wxT("Test"), toolbar_bmp1);
+    toolbar->SetCustomOverflowItems(prepend_items, append_items);
+    toolbar->Realize();
 
-  auiManager.AddPane(toolbar, wxAuiPaneInfo()
-      .Name(wxT("main_toolbar"))
-      .Caption(wxT("Main Toolbar"))
-      .ToolbarPane()
-      .Top()
-  );
+    auiManager.AddPane(toolbar, wxAuiPaneInfo()
+        .Name(wxT("main_toolbar"))
+        .Caption(wxT("Main Toolbar"))
+        .ToolbarPane()
+        .Top()
+    );
 
-  // Create the board panel
-  boardPanel = new wxPanel(this);
-  boardPanel->SetBackgroundColour(wxColour("#ffeeaa"));
+    // Create the board panel
+    boardPanel = new wxPanel(this);
+    boardPanel->SetBackgroundColour(wxColour("#ffeeaa"));
 
-  // Init board
-  board = new ChessBoard(boardPanel, dataDir + "/themes");
-  board->addPiece(ChessBoard::wRook, a1);
-  board->addPiece(ChessBoard::wKing, e1);
+    // Init board
+    board = new ChessBoard(boardPanel, dataDir + "/themes");
+    board->addPiece(ChessBoard::wRook, a1);
+    board->addPiece(ChessBoard::wKing, e1);
 
-  // Expand panel contents
-  wxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
-  sizer->Add(board, 1, wxEXPAND);
-  boardPanel->SetSizerAndFit(sizer);
+    // Expand panel contents
+    wxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
+    sizer->Add(board, 1, wxEXPAND);
+    boardPanel->SetSizerAndFit(sizer);
 
-  auiManager.AddPane(boardPanel, wxAuiPaneInfo().Name(wxT("board_panel")).CenterPane());
+    auiManager.AddPane(boardPanel, wxAuiPaneInfo().Name(wxT("board_panel")).CenterPane());
 
-  // Create move Tree Panel
-  moveTree = new wxPanel(this);
-  moveTree->SetBackgroundColour(wxColour("#e9ddaf"));
-  auiManager.AddPane(moveTree, wxAuiPaneInfo()
-      .Left()
-      .Name(wxT("move_tree"))
-      .Caption(wxT("Move tree"))
-      .DefaultPane()
-      .BestSize(wxSize(200,100))
-      .MinSize(wxSize(200,100))
-  );
+    // Create move Tree Panel
+    moveTree = new wxPanel(this);
+    moveTree->SetBackgroundColour(wxColour("#e9ddaf"));
+    auiManager.AddPane(moveTree, wxAuiPaneInfo()
+        .Left()
+        .Name(wxT("move_tree"))
+        .Caption(wxT("Move tree"))
+        .DefaultPane()
+        .BestSize(wxSize(200,100))
+        .MinSize(wxSize(200,100))
+    );
 
-  // Create game text panel
-  gameViewer = new wxPanel(this);
-  gameViewer->SetBackgroundColour(wxColour("#f6ffd5"));
-  auiManager.AddPane(gameViewer, wxAuiPaneInfo()
-      .Right()
-      .Name(wxT("game_viewer"))
-      .Caption(wxT("Notation"))
-      .DefaultPane()
-      .BestSize(wxSize(600,200))
-      .MinSize(wxSize(200,100))
-  );
+    // Create game text panel
+    gameViewer = new wxPanel(this);
+    gameViewer->SetBackgroundColour(wxColour("#f6ffd5"));
+    auiManager.AddPane(gameViewer, wxAuiPaneInfo()
+        .Right()
+        .Name(wxT("game_viewer"))
+        .Caption(wxT("Notation"))
+        .DefaultPane()
+        .BestSize(wxSize(600,200))
+        .MinSize(wxSize(200,100))
+    );
 
-  GameTxtCtrl *txtCtrl = new GameTxtCtrl(gameViewer, ID_CTRL_GAME_TXT);
+    GameTxtCtrl *txtCtrl = new GameTxtCtrl(gameViewer, ID_CTRL_GAME_TXT);
 
-  wxSizer *txtSizer = new wxBoxSizer(wxHORIZONTAL);
-  txtSizer->Add(txtCtrl, 1, wxEXPAND);
-  gameViewer->SetSizerAndFit(txtSizer);
+    wxSizer *txtSizer = new wxBoxSizer(wxHORIZONTAL);
+    txtSizer->Add(txtCtrl, 1, wxEXPAND);
+    gameViewer->SetSizerAndFit(txtSizer);
 
-  // Create game list panel
-  gamesList = new wxPanel(this);
-  gamesList->SetBackgroundColour(wxColour("#f6ffd5"));
-  auiManager.AddPane(gamesList, wxAuiPaneInfo()
-      .Bottom()
-      .DefaultPane()
-      .Name(wxT("games_list"))
-      .Caption(wxT("Games list"))
-      .BestSize(wxSize(800,200))
-      .MinSize(wxSize(400,100))
-      .MaximizeButton()
-      .MinimizeButton(true)
-  );
+    // Create game list panel
+    gamesList = new wxPanel(this);
+    gamesList->SetBackgroundColour(wxColour("#f6ffd5"));
+    auiManager.AddPane(gamesList, wxAuiPaneInfo()
+        .Bottom()
+        .DefaultPane()
+        .Name(wxT("games_list"))
+        .Caption(wxT("Games list"))
+        .BestSize(wxSize(800,200))
+        .MinSize(wxSize(400,100))
+        .MaximizeButton()
+        .MinimizeButton(true)
+    );
 
-  GamesListCtrl* listCtrl = new GamesListCtrl(gamesList, ID_GAMES_LIST_VIEW);
+    GamesListCtrl* listCtrl = new GamesListCtrl(gamesList, ID_GAMES_LIST_VIEW);
 
-  wxSizer *listSizer = new wxBoxSizer(wxHORIZONTAL);
-  listSizer->Add(listCtrl, 1, wxEXPAND);
-  gamesList->SetSizerAndFit(listSizer);
+    wxSizer *listSizer = new wxBoxSizer(wxHORIZONTAL);
+    listSizer->Add(listCtrl, 1, wxEXPAND);
+    gamesList->SetSizerAndFit(listSizer);
 
-  // "Commit" all changes made to wxAuiManager
-  auiManager.Update();
+    // "Commit" all changes made to wxAuiManager
+    auiManager.Update();
 }
 
 void MainFrame::OnGameLoaded(wxCommandEvent& evt)
 {
-  wxWindow * textCtrl = (wxWindow *) wxWindow::FindWindowById(ID_CTRL_GAME_TXT);
-  textCtrl->ProcessWindowEvent(evt);
+    wxWindow * textCtrl = (wxWindow *) wxWindow::FindWindowById(ID_CTRL_GAME_TXT);
+    textCtrl->ProcessWindowEvent(evt);
 }
 
 void MainFrame::OnOpenDatabaseDialog(wxCommandEvent& WXUNUSED(evt))
 {
-  wxFileDialog* OpenDialog = new wxFileDialog (
-   this,
-   _("Choose a database to open"),
-   wxEmptyString,
-   wxEmptyString,
-    _("Database files (*.si4, *.pgn)|*.si4;*.pgn"),
-    wxFD_OPEN,
-    wxDefaultPosition
-  );
+    wxFileDialog* OpenDialog = new wxFileDialog (
+        this,
+        _("Choose a database to open"),
+        wxEmptyString,
+        wxEmptyString,
+        _("Database files (*.si4, *.pgn)|*.si4;*.pgn"),
+        wxFD_OPEN,
+        wxDefaultPosition
+    );
 
-  if (OpenDialog->ShowModal() == wxID_OK)
-  {
-    wxString path = OpenDialog->GetPath();
+    if (OpenDialog->ShowModal() == wxID_OK) {
 
-    wxCommandEvent evt(EVT_OPEN_DATABASE_REQUEST, wxID_ANY);
-    evt.SetEventObject(this);
-    evt.SetString(path);
-    ProcessWindowEvent(evt);
-  }
+        wxString path = OpenDialog->GetPath();
+        wxCommandEvent evt(EVT_OPEN_DATABASE_REQUEST, wxID_ANY);
+        evt.SetEventObject(this);
+        evt.SetString(path);
+        ProcessWindowEvent(evt);
+    }
 
-  OpenDialog->Destroy();
+    OpenDialog->Destroy();
 }
 
 void MainFrame::OnOpenDatabase(wxCommandEvent& evt)
 {
-  DbInfos *infos = (DbInfos*) evt.GetClientData();
-  // Set the Title to reflect the file open
-  SetTitle(wxString::Format(wxT("WxScid - %s (%d games)"), infos->name,  infos->numGames));
-  wxWindow * listCtrl = (wxWindow *) wxWindow::FindWindowById(ID_GAMES_LIST_VIEW);
-  listCtrl->ProcessWindowEvent(evt);
+    DbInfos *infos = (DbInfos*) evt.GetClientData();
+    // Set the Title to reflect the file open
+    SetTitle(wxString::Format(wxT("WxScid - %s (%d games)"), infos->name, infos->numGames));
+    wxWindow * listCtrl = (wxWindow *) wxWindow::FindWindowById(ID_GAMES_LIST_VIEW);
+    listCtrl->ProcessWindowEvent(evt);
 }
 
 void MainFrame::OnExit(wxCommandEvent & WXUNUSED(evt))
 {
-  // true is to force the frame to close.
-  Close(true);
+    // true is to force the frame to close.
+    Close(true);
 }
 
 void MainFrame::flipBoard(wxCommandEvent & WXUNUSED(evt))
 {
-  board->flip();
+    board->flip();
 }
 
 MainFrame::~MainFrame()
 {
-  // Remove Scid EvntHandler
-  PopEventHandler(true);
-  auiManager.UnInit();
+    // Remove Scid EvntHandler
+    PopEventHandler(true);
+    auiManager.UnInit();
 }
 

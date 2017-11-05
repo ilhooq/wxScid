@@ -8,140 +8,140 @@
 #include "events.h"
 #include "database.h"
 
-BEGIN_EVENT_TABLE(GamesListCtrl, wxListCtrl)
-  EVT_LIST_CACHE_HINT(wxID_ANY, GamesListCtrl::OnCacheHint)
-  EVT_LIST_ITEM_ACTIVATED(wxID_ANY, GamesListCtrl::OnActivated)
-  EVT_COMMAND (wxID_ANY, EVT_OPEN_DATABASE, GamesListCtrl::OnOpenDatabase)
+BEGIN_EVENT_TABLE(GamesListCtrl, wxListCtrl) EVT_LIST_CACHE_HINT(wxID_ANY, GamesListCtrl::OnCacheHint)
+    EVT_LIST_ITEM_ACTIVATED(wxID_ANY, GamesListCtrl::OnActivated)
+    EVT_COMMAND (wxID_ANY, EVT_OPEN_DATABASE, GamesListCtrl::OnOpenDatabase)
 END_EVENT_TABLE()
 
-GamesListCtrl::GamesListCtrl(wxWindow *parent, const wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
-: wxListCtrl(parent, id, pos, size, style)
+GamesListCtrl::GamesListCtrl(wxWindow *parent, const wxWindowID id,const wxPoint& pos, const wxSize& size, long style) :
+wxListCtrl(parent, id, pos, size, style)
 {
-  wxListItem itemCol;
-  itemCol.SetText(wxT("Date"));
-  itemCol.SetImage(-1);
-  itemCol.SetAlign(wxLIST_FORMAT_LEFT);
-  InsertColumn(0, itemCol);
+    wxListItem itemCol;
+    itemCol.SetText(wxT("Date"));
+    itemCol.SetImage(-1);
+    itemCol.SetAlign(wxLIST_FORMAT_LEFT);
+    InsertColumn(0, itemCol);
 
-  itemCol.SetText(wxT("Result"));
-  itemCol.SetAlign(wxLIST_FORMAT_CENTER);
-  InsertColumn(1, itemCol);
+    itemCol.SetText(wxT("Result"));
+    itemCol.SetAlign(wxLIST_FORMAT_CENTER);
+    InsertColumn(1, itemCol);
 
-  itemCol.SetText(wxT("White"));
-  itemCol.SetAlign(wxLIST_FORMAT_LEFT);
-  InsertColumn(2, itemCol);
+    itemCol.SetText(wxT("White"));
+    itemCol.SetAlign(wxLIST_FORMAT_LEFT);
+    InsertColumn(2, itemCol);
 
-  itemCol.SetText(wxT("W-Elo"));
-  itemCol.SetAlign(wxLIST_FORMAT_CENTER);
-  InsertColumn(3, itemCol);
+    itemCol.SetText(wxT("W-Elo"));
+    itemCol.SetAlign(wxLIST_FORMAT_CENTER);
+    InsertColumn(3, itemCol);
 
-  itemCol.SetText(wxT("Black"));
-  itemCol.SetAlign(wxLIST_FORMAT_LEFT);
-  InsertColumn(4, itemCol);
+    itemCol.SetText(wxT("Black"));
+    itemCol.SetAlign(wxLIST_FORMAT_LEFT);
+    InsertColumn(4, itemCol);
 
-  itemCol.SetText(wxT("B-Elo"));
-  itemCol.SetAlign(wxLIST_FORMAT_CENTER);
-  InsertColumn(5, itemCol);
+    itemCol.SetText(wxT("B-Elo"));
+    itemCol.SetAlign(wxLIST_FORMAT_CENTER);
+    InsertColumn(5, itemCol);
 
-  itemCol.SetText(wxT("Moves"));
-  itemCol.SetAlign(wxLIST_FORMAT_LEFT);
-  InsertColumn(6, itemCol);
+    itemCol.SetText(wxT("Moves"));
+    itemCol.SetAlign(wxLIST_FORMAT_LEFT);
+    InsertColumn(6, itemCol);
 
-  SetColumnWidth(0, 150);
-  SetColumnWidth(1, 150);
-  SetColumnWidth(2, 150);
-  SetColumnWidth(3, 150);
-  SetColumnWidth(4, 150);
-  SetColumnWidth(5, 150);
-  SetColumnWidth(6, 200);
+    SetColumnWidth(0, 150);
+    SetColumnWidth(1, 150);
+    SetColumnWidth(2, 150);
+    SetColumnWidth(3, 150);
+    SetColumnWidth(4, 150);
+    SetColumnWidth(5, 150);
+    SetColumnWidth(6, 200);
 
-  EnableAlternateRowColours();
+    EnableAlternateRowColours();
 }
 
 // Called on double click or when pressed ENTER on a row
 void GamesListCtrl::OnActivated(wxListEvent &event)
 {
-  wxASSERT(GamesListCtrl::CacheEntryExists(event.GetIndex()));
-  GameEntry entry = hashEntries[event.GetIndex()];
+    wxASSERT(GamesListCtrl::CacheEntryExists(event.GetIndex()));
+    GameEntry entry = hashEntries[event.GetIndex()];
 
-  // Trigger load game request
-  wxWindow *win = (wxWindow*) this;
-  wxCommandEvent evt(EVT_LOAD_GAME_REQUEST, win->GetId());
-  evt.SetEventObject(this);
-  evt.SetClientData(&entry);
-  win->ProcessWindowEvent(evt);
+    // Trigger load game request
+    wxWindow *win = (wxWindow*) this;
+    wxCommandEvent evt(EVT_LOAD_GAME_REQUEST, win->GetId());
+    evt.SetEventObject(this);
+    evt.SetClientData(&entry);
+    win->ProcessWindowEvent(evt);
 }
 
 // This function is called during the window OnPaint event
 void GamesListCtrl::OnCacheHint(wxListEvent& event)
 {
 
-  if (hashEntries.size() > 100000) {
-    hashEntries.clear();
-  }
+    if (hashEntries.size() > 100000) {
+        hashEntries.clear();
+    }
 
-  if (CacheEntryExists(event.GetCacheFrom()) && CacheEntryExists(event.GetCacheTo())) {
-    // Items already exists
-    return;
-  }
+    if (CacheEntryExists(event.GetCacheFrom())
+            && CacheEntryExists(event.GetCacheTo())) {
+        // Items already exists
+        return;
+    }
 
-  int count = event.GetCacheTo() - event.GetCacheFrom();
+    int count = event.GetCacheTo() - event.GetCacheFrom();
 
-  // Add padding to retrieve more items in the cache
-  count += 100;
+    // Add padding to retrieve more items in the cache
+    count += 100;
 
-  // Trigger an event to populate hashEntries outside the widget
-  wxWindow *win = (wxWindow*) this;
+    // Trigger an event to populate hashEntries outside the widget
+    wxWindow *win = (wxWindow*) this;
 
-  wxCommandEvent eventList(EVT_LISTGAMES_REQUEST, win->GetId());
-  eventList.SetEventObject(this);
-  ListGamesRequest data;
-  data.fromItem = event.GetCacheFrom();
-  data.count = count;
-  data.HashEntries = &hashEntries;
-  eventList.SetClientData(&data);
-  win->ProcessWindowEvent(eventList);
+    wxCommandEvent eventList(EVT_LISTGAMES_REQUEST, win->GetId());
+    eventList.SetEventObject(this);
+    ListGamesRequest data;
+    data.fromItem = event.GetCacheFrom();
+    data.count = count;
+    data.HashEntries = &hashEntries;
+    eventList.SetClientData(&data);
+    win->ProcessWindowEvent(eventList);
 }
 
 wxString GamesListCtrl::OnGetItemText(long item, long column) const
 {
-  HashGameEntries::const_iterator it = hashEntries.find(item);
+    HashGameEntries::const_iterator it = hashEntries.find(item);
 
-  if (it == hashEntries.end()) {
-    // Entry not found
-    return wxString("Error");
-  }
+    if (it == hashEntries.end()) {
+        // Entry not found
+        return wxString("Error");
+    }
 
-  GameEntry entry = it->second;
+    GameEntry entry = it->second;
 
-  switch(column) {
+    switch (column) {
     case 0:
-      return entry.date;
+        return entry.date;
     case 1:
-      return entry.result;
+        return entry.result;
     case 2:
-      return entry.whiteName;
+        return entry.whiteName;
     case 3:
-      return entry.whiteElo;
+        return entry.whiteElo;
     case 4:
-      return entry.blackName;
+        return entry.blackName;
     case 5:
-      return entry.blackElo;
+        return entry.blackElo;
     case 6:
-      return entry.firstMoves;
-  }
+        return entry.firstMoves;
+    }
 
-  return wxString("Unknown column");
+    return wxString("Unknown column");
 }
 
 bool GamesListCtrl::CacheEntryExists(long item) const
 {
-  HashGameEntries::const_iterator it = hashEntries.find(item);
-  return (it != hashEntries.end());
+    HashGameEntries::const_iterator it = hashEntries.find(item);
+    return (it != hashEntries.end());
 }
 
 void GamesListCtrl::OnOpenDatabase(wxCommandEvent& evt)
 {
-  DbInfos *infos = (DbInfos*) evt.GetClientData();
-  SetItemCount(infos->numGames);
+    DbInfos *infos = (DbInfos*) evt.GetClientData();
+    SetItemCount(infos->numGames);
 }

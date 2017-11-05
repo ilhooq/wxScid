@@ -13,47 +13,44 @@
 class MainFrame: public wxFrame
 {
 public:
-  enum
-  {
-    ID = wxID_HIGHEST + 1, // Mainframe id
-    ID_Settings,
-    ID_CustomizeToolbar,
-    ID_Toolbar,
-    ID_FLIPBOARD,
-    ID_GAMES_LIST_VIEW,
-    ID_CTRL_GAME_TXT,
+    enum
+    {
+        ID = wxID_HIGHEST + 1, // Mainframe id
+        ID_Settings,
+        ID_CustomizeToolbar,
+        ID_Toolbar, ID_FLIPBOARD,
+        ID_GAMES_LIST_VIEW,
+        ID_CTRL_GAME_TXT,
+        ID_CreatePerspective,
+        ID_CopyPerspectiveCode,
+        ID_FirstPerspective = ID_CreatePerspective + 1000
+    };
 
-    ID_CreatePerspective,
-    ID_CopyPerspectiveCode,
+    MainFrame(wxWindow* parent,
+              wxWindowID id,
+              const wxString& title,
+              const wxPoint& pos = wxDefaultPosition,
+              const wxSize& size = wxDefaultSize,
+              long style = wxDEFAULT_FRAME_STYLE | wxSUNKEN_BORDER);
 
-    ID_FirstPerspective = ID_CreatePerspective + 1000
-  };
+    ~MainFrame();
 
-  MainFrame(wxWindow* parent,
-    wxWindowID id,
-    const wxString& title,
-    const wxPoint& pos = wxDefaultPosition,
-    const wxSize& size = wxDefaultSize,
-    long style = wxDEFAULT_FRAME_STYLE | wxSUNKEN_BORDER);
-
-  ~MainFrame();
-
-  void flipBoard(wxCommandEvent & WXUNUSED(evt));
+    void flipBoard(wxCommandEvent & WXUNUSED(evt));
 
 private:
-  wxAuiManager auiManager;
-  void OnExit(wxCommandEvent& evt);
-  void OnOpenDatabaseDialog(wxCommandEvent& evt);
-  void OnOpenDatabase(wxCommandEvent& evt);
-  void OnListGames(wxCommandEvent& evt);
-  void OnGameLoaded(wxCommandEvent& evt);
+    wxAuiManager auiManager;
+    void OnExit(wxCommandEvent& evt);
+    void OnOpenDatabaseDialog(wxCommandEvent& evt);
+    void OnOpenDatabase(wxCommandEvent& evt);
+    void OnListGames(wxCommandEvent& evt);
+    void OnGameLoaded(wxCommandEvent& evt);
 
 protected:
-  ChessBoard* board;
-  wxPanel* gamesList;
-  wxPanel* moveTree;
-  wxPanel* boardPanel;
-  wxPanel* gameViewer;
+    ChessBoard* board;
+    wxPanel* gamesList;
+    wxPanel* moveTree;
+    wxPanel* boardPanel;
+    wxPanel* gameViewer;
 };
 
 #endif /* MAINFRAME_H_ */

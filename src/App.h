@@ -7,19 +7,14 @@
 #define APP_H_
 
 #include <wx/app.h>
-// #include "scid/scid.h"
-#include "database.h"
 
 class App: public wxApp
 {
 public:
-  wxFrame *frame;
-  // Scid* scid;
-  //int currentDbHandle;
+    wxFrame *frame;
 
-  virtual bool OnInit();
-  static wxString getDataDir();
-  DbInfos OpenDatabase(wxString path);
+    virtual bool OnInit();
+    static wxString getDataDir();
 };
 
 DECLARE_APP(App)
