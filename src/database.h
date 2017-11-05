@@ -45,6 +45,15 @@ struct GameEntry
   int ply;
 };
 
+struct GamePos {
+  int RAVdepth;
+  int RAVnum;
+  wxString FEN;
+  wxString NAGs;
+  wxString comment;
+  wxString lastMoveSAN;
+};
+
 // Declare a hash map with int as keys and GameEntry as values
 WX_DECLARE_HASH_MAP( int, GameEntry, wxIntegerHash, wxIntegerEqual, HashGameEntries);
 

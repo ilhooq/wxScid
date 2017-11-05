@@ -63,10 +63,10 @@ void GamesListCtrl::OnActivated(wxListEvent &event)
 {
   wxASSERT(GamesListCtrl::CacheEntryExists(event.GetIndex()));
   GameEntry entry = hashEntries[event.GetIndex()];
-  wxPrintf(wxT("White: %s\n"), entry.whiteName);
 
+  // Trigger load game request
   wxWindow *win = (wxWindow*) this;
-  wxCommandEvent evt(EVT_OPEN_DATABASE_ENTRY_REQUEST, win->GetId());
+  wxCommandEvent evt(EVT_LOAD_GAME_REQUEST, win->GetId());
   evt.SetEventObject(this);
   evt.SetClientData(&entry);
   win->ProcessWindowEvent(evt);

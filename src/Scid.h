@@ -7,7 +7,9 @@
 
 #include <exception>
 #include <string>
+
 #include <wx/event.h>
+#include <wx/vector.h>
 
 #include "database.h"
 
@@ -44,12 +46,14 @@ public:
   Scid();
   ~Scid();
   void openDatabase(wxCommandEvent& evt);
+  void LoadGame(wxCommandEvent& evt);
   void OnListGames(wxCommandEvent& evt);
   void listGames(int baseHandle, const char* ordering, const char* filterId, HashGameEntries* hashEntries, unsigned int start=0, unsigned int count=0);
   /* Get the number of games in the database */
   unsigned int numGames(int baseHandle);
 private:
   int currentDbHandle;
+  wxVector<GamePos> *gameLoaded;
   wxDECLARE_EVENT_TABLE();
 };
 

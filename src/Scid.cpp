@@ -2,10 +2,12 @@
  * Scid.cpp
  *
  */
+#include <vector>
 #include <wx/filename.h>
 
 #include "scid/scidbase.h"
 #include "scid/dbasepool.h"
+
 #include "database.h"
 #include "Scid.h"
 #include "events.h"
@@ -14,12 +16,14 @@
 BEGIN_EVENT_TABLE(Scid, wxEvtHandler)
 EVT_COMMAND (wxID_ANY, EVT_OPEN_DATABASE_REQUEST, Scid::openDatabase)
 EVT_COMMAND (wxID_ANY, EVT_LISTGAMES_REQUEST, Scid::OnListGames)
+EVT_COMMAND (wxID_ANY, EVT_LOAD_GAME_REQUEST, Scid::LoadGame)
 END_EVENT_TABLE()
 
 Scid::Scid()
 {
   DBasePool::init();
   currentDbHandle = 0;
+  gameLoaded = new wxVector<GamePos>;
 }
 
 Scid::~Scid()
@@ -208,4 +212,48 @@ unsigned int Scid::numGames(int baseHandle)
   return dbase->numGames();
 }
 
+void Scid::LoadGame(wxCommandEvent& evt)
+{
+  scidBaseT* dbase = DBasePool::getBase(currentDbHandle);
 
+  GameEntry *entry = (GameEntry*) evt.GetClientData();
+
+  const IndexEntry* ie = dbase->getIndexEntry(entry->index);
+
+  // The name base file in memory.
+  const NameBase* nb = dbase->getNameBase();
+  wxPrintf(wxT("Enrtry requested: %d - Entry opened: %d - White : %s \n"),entry->index, ie->GetOffset(), wxString::FromUTF8(ie->GetWhiteName(nb)));
+
+  std::vector<scidBaseT::GamePos> dest;
+  dbase->getGame(ie, dest);
+
+  std::vector<scidBaseT::GamePos>::iterator it;
+
+  //wxVector<GamePos> *result = new wxVector<GamePos>;
+  if (!gameLoaded->empty()) gameLoaded->clear();
+
+  for(it = dest.begin(); it != dest.end(); it++) {
+    scidBaseT::GamePos ScidPos = *it;
+    GamePos pos;
+    pos.RAVdepth    = ScidPos.RAVdepth;
+    pos.RAVnum      = ScidPos.RAVnum;
+    pos.FEN         = ScidPos.FEN;
+    pos.comment     = ScidPos.comment;
+    pos.lastMoveSAN = ScidPos.lastMoveSAN;
+
+    for (size_t iNag = 0, nNag = ScidPos.NAGs.size(); iNag < nNag; iNag++) {
+      char temp[20];
+      game_printNag(ScidPos.NAGs[iNag], temp, true, PGN_FORMAT_Plain);
+      if (!pos.NAGs.empty()) pos.NAGs << " ";
+      pos.NAGs << temp;
+    }
+
+    gameLoaded->push_back(pos);
+  }
+
+  wxCommandEvent event(EVT_GAME_LOADED, wxID_ANY);
+  event.SetEventObject(this);
+  event.SetClientData(gameLoaded);
+  ProcessEvent(event);
+
+}

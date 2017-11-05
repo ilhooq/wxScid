@@ -39,6 +39,7 @@ MainFrame::MainFrame(
   Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::flipBoard, this, MainFrame::ID_FLIPBOARD);
 
   Bind(EVT_OPEN_DATABASE, &MainFrame::OnOpenDatabase, this);
+  Bind(EVT_GAME_LOADED, &MainFrame::OnGameLoaded, this);
 
   // Tell wxAuiManager to manage this frame
   auiManager.SetManagedWindow(this);
@@ -164,10 +165,10 @@ MainFrame::MainFrame(
   auiManager.Update();
 }
 
-void MainFrame::LoadGame(wxCommandEvent& evt)
+void MainFrame::OnGameLoaded(wxCommandEvent& evt)
 {
-  GameEntry *entry = (GameEntry*) evt.GetClientData();
-  wxPrintf(wxT("Entry opened: %d\n"), entry->index);
+  wxWindow * textCtrl = (wxWindow *) wxWindow::FindWindowById(ID_CTRL_GAME_TXT);
+  textCtrl->ProcessWindowEvent(evt);
 }
 
 void MainFrame::OnOpenDatabaseDialog(wxCommandEvent& WXUNUSED(evt))
