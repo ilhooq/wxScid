@@ -103,7 +103,12 @@ void GameTxtCtrl::OnURL(wxTextUrlEvent& evt)
 {
     int moveIdx = wxAtoi(evt.GetString());
     GamePos pos = game->at(moveIdx);
-    wxPrintf(wxT("Move index is %d - Move clicked is %s\n"), moveIdx, pos.lastMoveSAN);
+
+    wxWindow *win = (wxWindow*) this;
+    wxCommandEvent event(EVT_MAKE_MOVE);
+    event.SetEventObject(this);
+    event.SetClientData(&pos);
+    win->ProcessWindowEvent(event);
 }
 
 void GameTxtCtrl::WriteGame()

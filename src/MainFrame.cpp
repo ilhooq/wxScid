@@ -39,6 +39,7 @@ MainFrame::MainFrame(
 
     Bind(EVT_OPEN_DATABASE, &MainFrame::OnOpenDatabase, this);
     Bind(EVT_GAME_LOADED, &MainFrame::OnGameLoaded, this);
+    Bind(EVT_MAKE_MOVE, &MainFrame::OnMakeMove, this);
 
     // Tell wxAuiManager to manage this frame
     auiManager.SetManagedWindow(this);
@@ -99,9 +100,9 @@ MainFrame::MainFrame(
     boardPanel->SetBackgroundColour(wxColour("#ffeeaa"));
 
     // Init board
-    board = new ChessBoard(boardPanel, dataDir + "/themes");
-    board->addPiece(ChessBoard::Pieces::wRook, ChessBoard::Squares::a1);
-    board->addPiece(ChessBoard::Pieces::wKing, ChessBoard::Squares::e1);
+    board = new ChessBoard(boardPanel, dataDir + "/themes", ID_CHESSBOARD);
+    // Setup initial position
+    board->LoadPositionFromFen(wxT("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
 
     // Expand panel contents
     wxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -167,7 +168,24 @@ MainFrame::MainFrame(
 void MainFrame::OnGameLoaded(wxCommandEvent& evt)
 {
     wxWindow * textCtrl = (wxWindow *) wxWindow::FindWindowById(ID_CTRL_GAME_TXT);
+    ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(ID_CHESSBOARD);
+
+    wxVector<GamePos> * game = (wxVector<GamePos> *) evt.GetClientData();
+
+    if (game->size() > 0) {
+        // Load First postion of the game
+        GamePos pos = game->at(0);
+        chessboard->LoadPositionFromFen(pos.FEN);
+    }
+
     textCtrl->ProcessWindowEvent(evt);
+}
+
+void MainFrame::OnMakeMove(wxCommandEvent& evt)
+{
+    ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(ID_CHESSBOARD);
+    GamePos *pos = (GamePos*) evt.GetClientData();
+    chessboard->LoadPositionFromFen(pos->FEN);
 }
 
 void MainFrame::OnOpenDatabaseDialog(wxCommandEvent& WXUNUSED(evt))
@@ -203,13 +221,13 @@ void MainFrame::OnOpenDatabase(wxCommandEvent& evt)
     listCtrl->ProcessWindowEvent(evt);
 }
 
-void MainFrame::OnExit(wxCommandEvent & WXUNUSED(evt))
+void MainFrame::OnExit(wxCommandEvent &WXUNUSED(evt))
 {
     // true is to force the frame to close.
     Close(true);
 }
 
-void MainFrame::flipBoard(wxCommandEvent & WXUNUSED(evt))
+void MainFrame::flipBoard(wxCommandEvent &WXUNUSED(evt))
 {
     board->flip();
 }

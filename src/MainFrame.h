@@ -18,7 +18,9 @@ public:
         ID = wxID_HIGHEST + 1, // Mainframe id
         ID_Settings,
         ID_CustomizeToolbar,
-        ID_Toolbar, ID_FLIPBOARD,
+        ID_Toolbar,
+        ID_FLIPBOARD,
+        ID_CHESSBOARD,
         ID_GAMES_LIST_VIEW,
         ID_CTRL_GAME_TXT,
         ID_CreatePerspective,
@@ -44,6 +46,7 @@ private:
     void OnOpenDatabase(wxCommandEvent& evt);
     void OnListGames(wxCommandEvent& evt);
     void OnGameLoaded(wxCommandEvent& evt);
+    void OnMakeMove(wxCommandEvent& evt);
 
 protected:
     ChessBoard* board;
