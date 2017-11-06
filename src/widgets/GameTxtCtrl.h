@@ -21,13 +21,18 @@ public:
     {
     }
 
+    // void OnMouseMove(wxMouseEvent &evt);
+
 private:
     wxVector<GamePos> *game;
     wxVector<wxRichTextRange> *movesRange;
+    // wxRichTextObject *oldLinkHoverObject;
     void OnGameLoaded(wxCommandEvent& evt);
     void OnKeyDown(wxKeyEvent& evt);
     void OnURL(wxTextUrlEvent& evt);
-    void WriteGame();wxDECLARE_EVENT_TABLE();
+    void WriteGame();
+
+wxDECLARE_EVENT_TABLE();
 };
 
 #endif /* WIDGETS_GAMETXTCTRL_H_ */

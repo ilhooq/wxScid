@@ -237,7 +237,10 @@ void Scid::LoadGame(wxCommandEvent& evt)
         pos.RAVdepth = ScidPos.RAVdepth;
         pos.RAVnum = ScidPos.RAVnum;
         pos.FEN = ScidPos.FEN;
-        pos.comment = ScidPos.comment;
+        pos.comment = wxString::FromUTF8(ScidPos.comment.c_str());
+        pos.comment.Replace(wxT("\n"), wxT(" "));
+        pos.comment.Replace(wxT("\r"), wxT(""));
+
         pos.lastMoveSAN = ScidPos.lastMoveSAN;
 
         for (size_t iNag = 0, nNag = ScidPos.NAGs.size(); iNag < nNag; iNag++) {
