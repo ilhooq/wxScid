@@ -7,73 +7,18 @@
 #include <wx/dcgraph.h>
 
 #include "ChessBoard.h"
-#include "../Squares.h"
 
-ChessBoardSquare::ChessBoardSquare()
+const char squareNames[64][3] =
 {
-    rect = wxRect(0, 0, 0, 0);
-    color = NULL;
-    piece = NULL;
-}
-
-void ChessBoardSquare::setPosition(int x, int y)
-{
-    rect.SetPosition(wxPoint(x, y));
-}
-
-void ChessBoardSquare::setWidth(int width)
-{
-    rect.SetSize(wxSize(width, width));
-}
-
-bool ChessBoardSquare::hitTest(wxPoint pt)
-{
-    return rect.Contains(pt);
-}
-
-void ChessBoardSquare::addPiece(ChessBoardPiece* p)
-{
-    piece = p;
-}
-
-void ChessBoardSquare::removePiece()
-{
-    delete piece;
-    piece = NULL;
-}
-
-ChessBoardPiece::ChessBoardPiece(char type, wxImage * img) :
-        x(0), y(0), width(0), height(0), show(true)
-{
-    pieceType = type;
-    image = img;
-}
-
-bool ChessBoardPiece::hitTest(wxPoint pt)
-{
-    wxRect rect = getRect();
-    return rect.Contains(pt);
-}
-
-void ChessBoardPiece::setRect(wxRect rect)
-{
-    x = rect.x;
-    y = rect.y;
-    width = rect.width;
-    height = rect.height;
-}
-
-wxRect ChessBoardPiece::getRect()
-{
-    return wxRect(x, y, width, height);
-}
-
-wxBitmap ChessBoardPiece::getBitmap()
-{
-    wxImage img = image->Scale(width, height);
-    wxBitmap bmp(img);
-    return bmp;
-}
+    "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
+    "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+    "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+    "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
+    "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+    "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+    "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+    "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"
+};
 
 BEGIN_EVENT_TABLE(ChessBoard, wxWindow)
 
@@ -98,7 +43,8 @@ ChessBoard::ChessBoard(wxWindow* parent, wxString themeDir) :
     backgroundColor(255, 255, 255, wxALPHA_OPAQUE),
     wSquareColor(244, 238, 215, wxALPHA_OPAQUE),
     bSquareColor(160, 137, 44,wxALPHA_OPAQUE),
-    flipped(false), size(96, 96),
+    flipped(false),
+    size(96, 96),
     boardSize(96),
     squareSize(boardSize / 8),
     dragStartPos(0, 0)
@@ -188,7 +134,6 @@ void ChessBoard::onLeftDown(wxMouseEvent & evt)
 
 void ChessBoard::onLeftUp(wxMouseEvent & evt)
 {
-
     if (dragImage == NULL || dragPiece == NULL) {
         return;
     }
@@ -243,12 +188,7 @@ void ChessBoard::onMotion(wxMouseEvent & evt)
         Update();
 
         wxBitmap bmp = dragPiece->getBitmap();
-        // bmp.SaveFile("test.bmp", wxBITMAP_TYPE_PNG);
-        //wxIcon iconImg;
-        //iconImg.CopyFromBitmap(bmb);
-        //dragImage = new wxDragImage(iconImg);
         dragImage = new wxDragImage(bmp);
-
         wxPoint hotspot = dragStartPos - wxPoint(dragPiece->x, dragPiece->y);
 
         dragImage->BeginDrag(hotspot, this, false);
@@ -264,13 +204,13 @@ void ChessBoard::onMotion(wxMouseEvent & evt)
     }
 }
 
-void ChessBoard::addPiece(char pieceType, Square square)
+void ChessBoard::addPiece(char pieceType, Squares square)
 {
     ChessBoardPiece * piece = new ChessBoardPiece(pieceType, &themeImages[pieceType]);
     squares[square].addPiece(piece);
 }
 
-void ChessBoard::removePiece(Square square)
+void ChessBoard::removePiece(Squares square)
 {
     squares[square].removePiece();
 }
@@ -347,4 +287,3 @@ void ChessBoard::updateCoords()
         }
     }
 }
-

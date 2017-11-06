@@ -15,7 +15,6 @@
 #include "events.h"
 #include "App.h"
 #include "MainFrame.h"
-#include "Squares.h"
 
 MainFrame::MainFrame(
   wxWindow* parent,
@@ -101,8 +100,8 @@ MainFrame::MainFrame(
 
     // Init board
     board = new ChessBoard(boardPanel, dataDir + "/themes");
-    board->addPiece(ChessBoard::wRook, a1);
-    board->addPiece(ChessBoard::wKing, e1);
+    board->addPiece(ChessBoard::Pieces::wRook, ChessBoard::Squares::a1);
+    board->addPiece(ChessBoard::Pieces::wKing, ChessBoard::Squares::e1);
 
     // Expand panel contents
     wxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
