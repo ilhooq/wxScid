@@ -325,6 +325,7 @@ bool ChessBoard::LoadPositionFromFen(wxString FEN)
                         rankIndex -=1;
                         fileIndex = 0;
                         break;
+
                     case '1': fileIndex += 1; break;
                     case '2': fileIndex += 2; break;
                     case '3': fileIndex += 3; break;
@@ -333,18 +334,18 @@ bool ChessBoard::LoadPositionFromFen(wxString FEN)
                     case '6': fileIndex += 6; break;
                     case '7': fileIndex += 7; break;
                     case '8': fileIndex += 8; break;
-                    case 'P': addPiece(ChessBoard::wPawn, (ChessBoard::Squares) squareIndex); fileIndex++; break;
-                    case 'K': addPiece(ChessBoard::wKing, (ChessBoard::Squares) squareIndex); fileIndex++; break;
-                    case 'Q': addPiece(ChessBoard::wQueen, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'P': addPiece(ChessBoard::wPawn,   (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'K': addPiece(ChessBoard::wKing,   (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'Q': addPiece(ChessBoard::wQueen,  (ChessBoard::Squares) squareIndex); fileIndex++; break;
                     case 'N': addPiece(ChessBoard::wKnight, (ChessBoard::Squares) squareIndex); fileIndex++; break;
                     case 'B': addPiece(ChessBoard::wBishop, (ChessBoard::Squares) squareIndex); fileIndex++; break;
-                    case 'R': addPiece(ChessBoard::wRook, (ChessBoard::Squares) squareIndex); fileIndex++; break;
-                    case 'p': addPiece(ChessBoard::bPawn, (ChessBoard::Squares) squareIndex); fileIndex++; break;
-                    case 'k': addPiece(ChessBoard::bKing, (ChessBoard::Squares) squareIndex); fileIndex++; break;
-                    case 'q': addPiece(ChessBoard::bQueen, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'R': addPiece(ChessBoard::wRook,   (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'p': addPiece(ChessBoard::bPawn,   (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'k': addPiece(ChessBoard::bKing,   (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'q': addPiece(ChessBoard::bQueen,  (ChessBoard::Squares) squareIndex); fileIndex++; break;
                     case 'n': addPiece(ChessBoard::bKnight, (ChessBoard::Squares) squareIndex); fileIndex++; break;
                     case 'b': addPiece(ChessBoard::bBishop, (ChessBoard::Squares) squareIndex); fileIndex++; break;
-                    case 'r': addPiece(ChessBoard::bRook, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'r': addPiece(ChessBoard::bRook,   (ChessBoard::Squares) squareIndex); fileIndex++; break;
 
                     default:
                         return false;
