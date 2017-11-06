@@ -22,11 +22,11 @@ public:
     int y;
     int width;
     int height;
-    char pieceType;
+    short pieceType;
     wxImage * image;
     bool show;
 
-    ChessBoardPiece(char type, wxImage * img) : x(0), y(0), width(0), height(0), show(true)
+    ChessBoardPiece(short type, wxImage * img) : x(0), y(0), width(0), height(0), show(true)
     {
         pieceType = type;
         image = img;
@@ -52,6 +52,7 @@ public:
 
     wxBitmap getBitmap()
     {
+        wxASSERT(width > 0 && height > 0);
         return wxBitmap(image->Scale(width, height));
     }
 };
@@ -91,7 +92,7 @@ public:
 
     void removePiece()
     {
-        delete piece;
+        if (piece) delete piece;
         piece = NULL;
     }
 };
@@ -115,6 +116,12 @@ public:
         bPawn
     };
 
+    enum Sides
+    {
+        WHITE,
+        BLACK
+    };
+
     enum Squares
     {
         a1, b1, c1, d1, e1, f1, g1, h1,
@@ -127,7 +134,7 @@ public:
         a8, b8, c8, d8, e8, f8, g8, h8
     };
 
-    ChessBoard(wxWindow* parent, wxString themeDir);
+    ChessBoard(wxWindow* parent, wxString themeDir, const wxWindowID id);
 
     void onPaint(wxPaintEvent & evt);
 
@@ -136,13 +143,15 @@ public:
     void onLeftUp(wxMouseEvent & evt);
     void onMotion(wxMouseEvent & evt);
 
-    void addPiece(char pieceType, Squares square);
+    void addPiece(Pieces pieceType, Squares square);
     void removePiece(Squares square);
     void flip();
+    void Clear();
+    bool LoadPositionFromFen(wxString FEN);
 
 protected:
     wxImage theme;
-    wxImage themeImages[11];
+    wxImage themeImages[12];
     wxColor backgroundColor;
     wxColor wSquareColor;
     wxColor bSquareColor;
@@ -154,6 +163,8 @@ protected:
     ChessBoardPiece* dragPiece;
     wxDragImage * dragImage;
     wxPoint dragStartPos;
+    // Side to move (Black or white)
+    short side;
 
     char getRankIndex(char squareIndex);
     char getFileIndex(char squareIndex);

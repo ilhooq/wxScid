@@ -27,17 +27,15 @@ EVT_LEFT_DOWN(ChessBoard::onLeftDown)
 EVT_LEFT_UP(ChessBoard::onLeftUp)
 
 EVT_PAINT(ChessBoard::onPaint)
-EVT_SIZE(ChessBoard::onSize)
-
 END_EVENT_TABLE()
 
-ChessBoard::ChessBoard(wxWindow* parent, wxString themeDir) :
+ChessBoard::ChessBoard(wxWindow* parent, wxString themeDir, const wxWindowID id) :
 #ifdef __WXMSW__
     // Force Full repain on windows to avoid flickering
     // wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE|wxCLIP_CHILDREN ),
-    wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE),
+    wxWindow(parent, id, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE),
 #else
-    wxWindow(parent, wxID_ANY),
+    wxWindow(parent, id),
 #endif
     theme(themeDir + "/merida.png", wxBITMAP_TYPE_PNG),
     backgroundColor(255, 255, 255, wxALPHA_OPAQUE),
@@ -47,7 +45,8 @@ ChessBoard::ChessBoard(wxWindow* parent, wxString themeDir) :
     size(96, 96),
     boardSize(96),
     squareSize(boardSize / 8),
-    dragStartPos(0, 0)
+    dragStartPos(0, 0),
+    side(WHITE)
 {
     themeImages[ChessBoard::wRook]   = theme.GetSubImage(wxRect(0, 0, 132, 132));
     themeImages[ChessBoard::wKnight] = theme.GetSubImage(wxRect(132, 0, 132, 132));
@@ -55,6 +54,13 @@ ChessBoard::ChessBoard(wxWindow* parent, wxString themeDir) :
     themeImages[ChessBoard::wQueen]  = theme.GetSubImage(wxRect(396, 0, 132, 132));
     themeImages[ChessBoard::wKing]   = theme.GetSubImage(wxRect(528, 0, 132, 132));
     themeImages[ChessBoard::wPawn]   = theme.GetSubImage(wxRect(660, 0, 132, 132));
+
+    themeImages[ChessBoard::bRook]   = theme.GetSubImage(wxRect(0,   132, 132, 132));
+    themeImages[ChessBoard::bKnight] = theme.GetSubImage(wxRect(132, 132, 132, 132));
+    themeImages[ChessBoard::bBishop] = theme.GetSubImage(wxRect(264, 132, 132, 132));
+    themeImages[ChessBoard::bQueen]  = theme.GetSubImage(wxRect(396, 132, 132, 132));
+    themeImages[ChessBoard::bKing]   = theme.GetSubImage(wxRect(528, 132, 132, 132));
+    themeImages[ChessBoard::bPawn]   = theme.GetSubImage(wxRect(660, 132, 132, 132));
 
     dragPiece = NULL;
     dragImage = NULL;
@@ -89,6 +95,9 @@ void ChessBoard::onPaint(wxPaintEvent & evt)
     // } catch () {
     //	dc = pdc
     // }
+
+    updateCoords();
+
     wxPaintDC pdc(this);
     wxGCDC dc(pdc);
 
@@ -109,11 +118,6 @@ void ChessBoard::onPaint(wxPaintEvent & evt)
                     squares[i].piece->y);
         }
     }
-}
-
-void ChessBoard::onSize(wxSizeEvent & evt)
-{
-    updateCoords();
 }
 
 void ChessBoard::onLeftDown(wxMouseEvent & evt)
@@ -204,7 +208,7 @@ void ChessBoard::onMotion(wxMouseEvent & evt)
     }
 }
 
-void ChessBoard::addPiece(char pieceType, Squares square)
+void ChessBoard::addPiece(Pieces pieceType, Squares square)
 {
     ChessBoardPiece * piece = new ChessBoardPiece(pieceType, &themeImages[pieceType]);
     squares[square].addPiece(piece);
@@ -228,7 +232,7 @@ ChessBoardPiece* ChessBoard::findPiece(wxPoint pt)
 void ChessBoard::flip()
 {
     flipped = !flipped;
-    updateCoords();
+    // updateCoords();
     Refresh();
 }
 
@@ -287,3 +291,74 @@ void ChessBoard::updateCoords()
         }
     }
 }
+
+void ChessBoard::Clear()
+{
+    for (int i = 0; i < 64; i++) {
+        if (squares[i].piece != NULL) {
+            squares[i].removePiece();
+        }
+    }
+    Refresh();
+}
+
+bool ChessBoard::LoadPositionFromFen(wxString FEN)
+{
+    Clear();
+
+    int i = 0, part = 0, rankIndex = 7, fileIndex = 0, squareIndex = 0;
+
+    const char* fen = FEN.c_str();
+
+    for (i=0; i < FEN.Length(); i++) {
+
+        if (fen[i] == ' ') {
+            part++;
+            continue;
+        }
+
+        switch (part) {
+            case  0:
+                squareIndex = 8*rankIndex + fileIndex;
+                switch(fen[i]) {
+                    case '/':
+                        rankIndex -=1;
+                        fileIndex = 0;
+                        break;
+                    case '1': fileIndex += 1; break;
+                    case '2': fileIndex += 2; break;
+                    case '3': fileIndex += 3; break;
+                    case '4': fileIndex += 4; break;
+                    case '5': fileIndex += 5; break;
+                    case '6': fileIndex += 6; break;
+                    case '7': fileIndex += 7; break;
+                    case '8': fileIndex += 8; break;
+                    case 'P': addPiece(ChessBoard::wPawn, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'K': addPiece(ChessBoard::wKing, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'Q': addPiece(ChessBoard::wQueen, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'N': addPiece(ChessBoard::wKnight, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'B': addPiece(ChessBoard::wBishop, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'R': addPiece(ChessBoard::wRook, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'p': addPiece(ChessBoard::bPawn, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'k': addPiece(ChessBoard::bKing, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'q': addPiece(ChessBoard::bQueen, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'n': addPiece(ChessBoard::bKnight, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'b': addPiece(ChessBoard::bBishop, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+                    case 'r': addPiece(ChessBoard::bRook, (ChessBoard::Squares) squareIndex); fileIndex++; break;
+
+                    default:
+                        return false;
+                }
+                break;
+            case 1:
+                side = (fen[i] == 'w') ? WHITE : BLACK;
+                break;
+        }
+    }
+
+    Refresh();
+
+    return true;
+}
+
+
