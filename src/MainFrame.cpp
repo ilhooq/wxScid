@@ -10,7 +10,7 @@
 
 #include "widgets/ChessBoard.h"
 #include "widgets/GamesListCtrl.h"
-#include "widgets/GameTxtCtrl.h"
+#include "widgets/GameHtmlCtrl.h"
 #include "database.h"
 #include "events.h"
 #include "App.h"
@@ -135,10 +135,10 @@ MainFrame::MainFrame(
         .MinSize(wxSize(200,100))
     );
 
-    GameTxtCtrl *txtCtrl = new GameTxtCtrl(gameViewer, ID_CTRL_GAME_TXT);
+    GameHtmlCtrl *htmlCtrl = new GameHtmlCtrl(gameViewer, ID_CTRL_GAME_TXT);
 
     wxSizer *txtSizer = new wxBoxSizer(wxHORIZONTAL);
-    txtSizer->Add(txtCtrl, 1, wxEXPAND);
+    txtSizer->Add(htmlCtrl, 1, wxEXPAND);
     gameViewer->SetSizerAndFit(txtSizer);
 
     // Create game list panel
