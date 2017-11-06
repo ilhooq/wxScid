@@ -11,8 +11,7 @@ wxscid_SOURCES= \
 	events.cpp \
 	widgets/ChessBoard.cpp \
 	widgets/GamesListCtrl.cpp \
-	widgets/GameTxtCtrl.cpp \
-	widgets/GameHtmlCtrl.cpp
+	widgets/GameTxtCtrl.cpp
 
 wxscid_CXXFLAGS  = $(AM_CXXFLAGS) @WX_CXXFLAGS@ -std=c++11
 wxscid_LDADD   = $(AM_LIBS) @WX_LIBS@ scid/libscid.la
