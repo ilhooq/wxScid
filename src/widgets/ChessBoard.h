@@ -32,12 +32,12 @@ public:
         image = img;
     }
 
-    bool hitTest(wxPoint pt)
+    bool HitTest(wxPoint pt)
     {
-        return getRect().Contains(pt);
+        return GetRect().Contains(pt);
     }
 
-    void setRect(wxRect rect)
+    void SetRect(wxRect rect)
     {
         x = rect.x;
         y = rect.y;
@@ -45,12 +45,12 @@ public:
         height = rect.height;
     }
 
-    wxRect getRect()
+    wxRect GetRect()
     {
         return wxRect(x, y, width, height);
     }
 
-    wxBitmap getBitmap()
+    wxBitmap GetBitmap()
     {
         wxASSERT(width > 0 && height > 0);
         return wxBitmap(image->Scale(width, height));
@@ -70,27 +70,27 @@ public:
         piece = NULL;
     }
 
-    void setPosition(int x, int y)
+    void SetPosition(int x, int y)
     {
         rect.SetPosition(wxPoint(x, y));
     }
 
-    void setWidth(int width)
+    void SetWidth(int width)
     {
         rect.SetSize(wxSize(width, width));
     }
 
-    bool hitTest(wxPoint pt)
+    bool HitTest(wxPoint pt)
     {
         return rect.Contains(pt);
     }
 
-    void addPiece(ChessBoardPiece* p)
+    void AddPiece(ChessBoardPiece* p)
     {
         piece = p;
     }
 
-    void removePiece()
+    void RemovePiece()
     {
         if (piece) delete piece;
         piece = NULL;
@@ -136,20 +136,13 @@ public:
 
     ChessBoard(wxWindow* parent, wxString themeDir, const wxWindowID id);
 
-    void onPaint(wxPaintEvent & evt);
-
-    void onSize(wxSizeEvent & evt);
-    void onLeftDown(wxMouseEvent & evt);
-    void onLeftUp(wxMouseEvent & evt);
-    void onMotion(wxMouseEvent & evt);
-
-    void addPiece(Pieces pieceType, Squares square);
-    void removePiece(Squares square);
-    void flip();
+    void AddPiece(Pieces pieceType, Squares square);
+    void RemovePiece(Squares square);
+    void Flip();
     void Clear();
     bool LoadPositionFromFen(wxString FEN);
 
-protected:
+private:
     wxImage theme;
     wxImage themeImages[12];
     wxColor backgroundColor;
@@ -166,12 +159,17 @@ protected:
     // Side to move (Black or white)
     short side;
 
-    char getRankIndex(char squareIndex);
-    char getFileIndex(char squareIndex);
-    ChessBoardPiece* findPiece(wxPoint pt);
-    char findSquareIndex(wxPoint pt);
-    char findSquareIndex(ChessBoardPiece* p);
-    void updateCoords();
+    void OnPaint(wxPaintEvent & evt);
+    void OnSize(wxSizeEvent & evt);
+    void OnLeftDown(wxMouseEvent & evt);
+    void OnLeftUp(wxMouseEvent & evt);
+    void OnMotion(wxMouseEvent & evt);
+    int GetRankIndex(int squareIndex);
+    int GetFileIndex(int squareIndex);
+    ChessBoardPiece* FindPiece(wxPoint pt);
+    int FindSquareIndex(wxPoint pt);
+    int FindSquareIndex(ChessBoardPiece* p);
+    void UpdateCoords();
 
 DECLARE_EVENT_TABLE()
 };

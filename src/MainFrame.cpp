@@ -229,7 +229,7 @@ void MainFrame::OnExit(wxCommandEvent &WXUNUSED(evt))
 
 void MainFrame::flipBoard(wxCommandEvent &WXUNUSED(evt))
 {
-    board->flip();
+    board->Flip();
 }
 
 MainFrame::~MainFrame()
