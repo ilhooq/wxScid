@@ -134,7 +134,12 @@ public:
         a8, b8, c8, d8, e8, f8, g8, h8
     };
 
-    ChessBoard(wxWindow* parent, wxString themeDir, const wxWindowID id);
+    ChessBoard(wxWindow* parent,
+               const wxWindowID id,
+               const wxString themeDir,
+               const wxPoint& pos = wxDefaultPosition,
+               const wxSize& size = wxDefaultSize,
+               long style = 0);
 
     void AddPiece(Pieces pieceType, Squares square);
     void RemovePiece(Squares square);
@@ -160,7 +165,6 @@ private:
     short side;
 
     void OnPaint(wxPaintEvent & evt);
-    void OnSize(wxSizeEvent & evt);
     void OnLeftDown(wxMouseEvent & evt);
     void OnLeftUp(wxMouseEvent & evt);
     void OnMotion(wxMouseEvent & evt);

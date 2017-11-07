@@ -32,8 +32,8 @@ public:
               wxWindowID id,
               const wxString& title,
               const wxPoint& pos = wxDefaultPosition,
-              const wxSize& size = wxDefaultSize,
-              long style = wxDEFAULT_FRAME_STYLE | wxSUNKEN_BORDER);
+              const wxSize& size = wxSize(800, 600),
+              long style = wxDEFAULT_FRAME_STYLE | wxMAXIMIZE| wxBORDER_SUNKEN);
 
     ~MainFrame();
 

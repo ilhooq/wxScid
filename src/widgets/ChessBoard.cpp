@@ -27,13 +27,8 @@ BEGIN_EVENT_TABLE(ChessBoard, wxWindow)
     EVT_PAINT(ChessBoard::OnPaint)
 END_EVENT_TABLE()
 
-ChessBoard::ChessBoard(wxWindow* parent, wxString themeDir, const wxWindowID id) :
-#ifdef __WXMSW__
-    // Force full repaint when resizing on Windows to avoid flickering
-    wxWindow(parent, id, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE),
-#else
-    wxWindow(parent, id),
-#endif
+ChessBoard::ChessBoard(wxWindow* parent, const wxWindowID id, const wxString themeDir, const wxPoint& pos, const wxSize& size, long style) :
+    wxWindow(parent, id, pos, size, style),
     theme(themeDir + "/merida.png", wxBITMAP_TYPE_PNG),
     backgroundColor(255, 255, 255, wxALPHA_OPAQUE),
     wSquareColor(244, 238, 215, wxALPHA_OPAQUE),
@@ -78,8 +73,11 @@ ChessBoard::ChessBoard(wxWindow* parent, wxString themeDir, const wxWindowID id)
             fileIdx = 0;
         }
     }
+
 #ifdef __WXMSW__
     // Avoid flickering on Windows
+    // Force full repaint when resizing
+    SetWindowStyle(GetWindowStyle() | wxFULL_REPAINT_ON_RESIZE);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
 #endif
 }

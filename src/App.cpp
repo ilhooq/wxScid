@@ -27,8 +27,7 @@ bool App::OnInit()
         return false;
     }
 
-    frame = new MainFrame(NULL, MainFrame::ID, _T("WxScid"), wxDefaultPosition,
-            wxSize(800, 600));
+    frame = new MainFrame(NULL, MainFrame::ID, _T("WxScid"));
     frame->Show(true);
 
     frame->PushEventHandler(new Scid);

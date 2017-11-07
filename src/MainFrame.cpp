@@ -16,13 +16,13 @@
 #include "App.h"
 #include "MainFrame.h"
 
-MainFrame::MainFrame(
-  wxWindow* parent,
-  wxWindowID id,
-  const wxString& title,
-  const wxPoint& pos,
-  const wxSize& size,
-  long style) : wxFrame(parent, id, title, pos, size, style)
+MainFrame::MainFrame(wxWindow* parent,
+                     wxWindowID id,
+                     const wxString& title,
+                     const wxPoint& pos,
+                     const wxSize& size,
+                     long style) :
+wxFrame(parent, id, title, pos, size, style)
 {
     wxString dataDir = App::getDataDir();
 
@@ -47,7 +47,7 @@ MainFrame::MainFrame(
     // Customize AUI look
     wxAuiDockArt* artProvider = auiManager.GetArtProvider();
     artProvider->SetMetric(wxAUI_DOCKART_SASH_SIZE, 1);
-    artProvider->SetMetric(wxAUI_DOCKART_CAPTION_SIZE, 24);
+    artProvider->SetMetric(wxAUI_DOCKART_CAPTION_SIZE, 22);
     artProvider->SetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE, 0);
     artProvider->SetMetric(wxAUI_DOCKART_PANE_BUTTON_SIZE, 16);
     artProvider->SetMetric(wxAUI_DOCKART_GRADIENT_TYPE, wxAUI_GRADIENT_NONE);
@@ -97,10 +97,9 @@ MainFrame::MainFrame(
 
     // Create the board panel
     boardPanel = new wxPanel(this);
-    boardPanel->SetBackgroundColour(wxColour("#ffeeaa"));
 
     // Init board
-    board = new ChessBoard(boardPanel, dataDir + "/themes", ID_CHESSBOARD);
+    board = new ChessBoard(boardPanel, ID_CHESSBOARD, dataDir + "/themes");
     // Setup initial position
     board->LoadPositionFromFen(wxT("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
 
@@ -109,7 +108,12 @@ MainFrame::MainFrame(
     sizer->Add(board, 1, wxEXPAND);
     boardPanel->SetSizerAndFit(sizer);
 
-    auiManager.AddPane(boardPanel, wxAuiPaneInfo().Name(wxT("board_panel")).CenterPane());
+    auiManager.AddPane(boardPanel, wxAuiPaneInfo()
+            .Name(wxT("board_panel"))
+            .CenterPane()
+            .BestSize(wxSize(800,800))
+            .MinSize(wxSize(200,200))
+    );
 
     // Create move Tree Panel
     moveTree = new wxPanel(this);
@@ -119,20 +123,19 @@ MainFrame::MainFrame(
         .Name(wxT("move_tree"))
         .Caption(wxT("Move tree"))
         .DefaultPane()
-        .BestSize(wxSize(200,100))
+        .BestSize(wxSize(300,100))
         .MinSize(wxSize(200,100))
     );
 
     // Create game text panel
     gameViewer = new wxPanel(this);
-    gameViewer->SetBackgroundColour(wxColour("#f6ffd5"));
     auiManager.AddPane(gameViewer, wxAuiPaneInfo()
         .Right()
         .Name(wxT("game_viewer"))
         .Caption(wxT("Notation"))
         .DefaultPane()
-        .BestSize(wxSize(600,200))
-        .MinSize(wxSize(200,100))
+        .BestSize(wxSize(600,600))
+        .MinSize(wxSize(350,100))
     );
 
     GameTxtCtrl *txtCtrl = new GameTxtCtrl(gameViewer, ID_CTRL_GAME_TXT);
@@ -143,14 +146,13 @@ MainFrame::MainFrame(
 
     // Create game list panel
     gamesList = new wxPanel(this);
-    gamesList->SetBackgroundColour(wxColour("#f6ffd5"));
     auiManager.AddPane(gamesList, wxAuiPaneInfo()
         .Bottom()
         .DefaultPane()
         .Name(wxT("games_list"))
         .Caption(wxT("Games list"))
-        .BestSize(wxSize(800,200))
-        .MinSize(wxSize(400,100))
+        .BestSize(wxSize(1900,600))
+        .MinSize(wxSize(400,200))
         .MaximizeButton()
         .MinimizeButton(true)
     );
