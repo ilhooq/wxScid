@@ -41,8 +41,8 @@ make && make install
 Then compile wxScid with these options :
 
 ```bash
-cp ${your_install_prefix}/share/aclocal/wxwin.m4 ./m4/
-./autogen.sh --with-wx-config=${your_install_prefix}/bin/wx-config --with-toolkit=gtk3
+mkdir m4 && cd m4 && wget https://raw.githubusercontent.com/wxWidgets/wxWidgets/master/wxwin.m4
+./autogen.sh --with-wx-config=${your_install_prefix}/bin/wx-config --with-toolkit=gtk3 --prefix=${your_install_prefix}
 make
 ```
 To run the app :
