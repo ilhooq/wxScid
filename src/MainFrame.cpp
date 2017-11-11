@@ -102,6 +102,7 @@ wxFrame(parent, id, title, pos, size, style)
     board = new ChessBoard(boardPanel, ID_CHESSBOARD, dataDir + "/themes");
     // Setup initial position
     board->LoadPositionFromFen(wxT("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
+    board->Bind(wxEVT_MOUSEWHEEL, &MainFrame::OnMouseWheelOnBoard, this);
 
     // Expand panel contents
     wxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -188,6 +189,20 @@ void MainFrame::OnMakeMove(wxCommandEvent& evt)
     ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(ID_CHESSBOARD);
     GamePos *pos = (GamePos*) evt.GetClientData();
     chessboard->LoadPositionFromFen(pos->FEN);
+}
+
+void MainFrame::OnMouseWheelOnBoard(wxMouseEvent& evt)
+{
+    GameTxtCtrl * textCtrl = (GameTxtCtrl *) wxWindow::FindWindowById(ID_CTRL_GAME_TXT);
+
+    int rot = evt.GetWheelRotation();
+    if (rot > 0) {
+        // Up
+        textCtrl->Prev();
+    } else {
+        // Down
+        textCtrl->Next();
+    }
 }
 
 void MainFrame::OnOpenDatabaseDialog(wxCommandEvent& WXUNUSED(evt))

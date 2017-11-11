@@ -21,7 +21,8 @@ public:
     {
     }
 
-    // void OnMouseMove(wxMouseEvent &evt);
+    void Next();
+    void Prev();
 
 private:
     wxVector<GamePos> *game;
@@ -32,6 +33,7 @@ private:
     void OnURL(wxTextUrlEvent& evt);
     void WriteGame();
     void highLightCurrentMove();
+    void PlayMove(int move);
 
 wxDECLARE_EVENT_TABLE();
 };

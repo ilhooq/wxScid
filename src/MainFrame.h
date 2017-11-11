@@ -47,6 +47,7 @@ private:
     void OnListGames(wxCommandEvent& evt);
     void OnGameLoaded(wxCommandEvent& evt);
     void OnMakeMove(wxCommandEvent& evt);
+    void OnMouseWheelOnBoard(wxMouseEvent& evt);
 
 protected:
     ChessBoard* board;

@@ -22,6 +22,20 @@ currentMove(1)
     // oldLinkHoverObject = NULL;
 }
 
+void GameTxtCtrl::Next()
+{
+    //currentMove++;
+    //highLightCurrentMove();
+    PlayMove(currentMove+1);
+}
+
+void GameTxtCtrl::Prev()
+{
+    //currentMove--;
+    //highLightCurrentMove();
+    PlayMove(currentMove-1);
+}
+
 void GameTxtCtrl::OnGameLoaded(wxCommandEvent& evt)
 {
     game = (wxVector<GamePos> *) evt.GetClientData();
@@ -103,6 +117,8 @@ void GameTxtCtrl::OnMouseMove(wxMouseEvent& event)
 void GameTxtCtrl::OnURL(wxTextUrlEvent& evt)
 {
     int moveIdx = wxAtoi(evt.GetString());
+    PlayMove(moveIdx);
+    /*
     GamePos pos = game->at(moveIdx);
 
     wxWindow *win = (wxWindow*) this;
@@ -110,6 +126,7 @@ void GameTxtCtrl::OnURL(wxTextUrlEvent& evt)
     event.SetEventObject(this);
     event.SetClientData(&pos);
     win->ProcessWindowEvent(event);
+    */
 }
 
 void GameTxtCtrl::WriteGame()
@@ -232,4 +249,20 @@ void GameTxtCtrl::highLightCurrentMove()
         }
     }
 }
+
+void GameTxtCtrl::PlayMove(int move)
+{
+    currentMove = move;
+    highLightCurrentMove();
+
+    GamePos pos = game->at(currentMove);
+
+    wxWindow *win = (wxWindow*) this;
+    wxCommandEvent event(EVT_MAKE_MOVE);
+    event.SetEventObject(this);
+    event.SetClientData(&pos);
+    win->ProcessWindowEvent(event);
+}
+
+
 
