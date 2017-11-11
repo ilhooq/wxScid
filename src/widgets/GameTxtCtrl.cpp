@@ -14,7 +14,8 @@ EVT_TEXT_URL(wxID_ANY, GameTxtCtrl::OnURL)
 END_EVENT_TABLE()
 
 GameTxtCtrl::GameTxtCtrl(wxWindow* parent, wxWindowID id, const wxPoint &pos, const wxSize &size) :
-wxRichTextCtrl(parent, id, "", pos, size, wxBORDER_NONE | wxWANTS_CHARS | wxRE_MULTILINE | wxRE_READONLY)
+wxRichTextCtrl(parent, id, "", pos, size, wxBORDER_NONE | wxWANTS_CHARS | wxRE_MULTILINE | wxRE_READONLY),
+currentMove(1)
 {
     game = NULL;
     movesRange = new wxVector<wxRichTextRange>;
@@ -209,5 +210,26 @@ void GameTxtCtrl::WriteGame()
     EndStyle();
     EndSuppressUndo();
     win->Thaw();
+
+    highLightCurrentMove();
+}
+
+void GameTxtCtrl::highLightCurrentMove()
+{
+    wxRichTextAttr style;
+    wxRichTextRange range = movesRange->at(currentMove);
+
+    if (GetStyleForRange(range, style)) {
+        style.SetBackgroundColour(wxColor(220, 230, 230, wxALPHA_OPAQUE));
+        SetStyle(range, style);
+    }
+
+    if (currentMove > 1) {
+        range = movesRange->at(currentMove-1);
+        if (GetStyleForRange(range, style)) {
+            style.SetBackgroundColour(wxColor(255, 255, 255, wxALPHA_OPAQUE));
+            SetStyle(range, style);
+        }
+    }
 }
 

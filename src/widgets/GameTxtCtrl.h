@@ -26,11 +26,12 @@ public:
 private:
     wxVector<GamePos> *game;
     wxVector<wxRichTextRange> *movesRange;
-    // wxRichTextObject *oldLinkHoverObject;
+    int currentMove;
     void OnGameLoaded(wxCommandEvent& evt);
     void OnKeyDown(wxKeyEvent& evt);
     void OnURL(wxTextUrlEvent& evt);
     void WriteGame();
+    void highLightCurrentMove();
 
 wxDECLARE_EVENT_TABLE();
 };
