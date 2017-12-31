@@ -61,9 +61,9 @@ ChessBoard::ChessBoard(wxWindow* parent, const wxWindowID id, const wxString the
 
     for (int i = 0; i < 64; i++) {
         if (rankIdx % 2) {
-            squares[i].color = fileIdx % 2 ? &wSquareColor : &bSquareColor;
-        } else {
             squares[i].color = fileIdx % 2 ? &bSquareColor : &wSquareColor;
+        } else {
+            squares[i].color = fileIdx % 2 ? &wSquareColor : &bSquareColor;
         }
 
         fileIdx++;
