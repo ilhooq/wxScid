@@ -30,3 +30,4 @@ ltmain.sh
 .libs
 *.la
 *.lo
+/build_win.sh
