@@ -210,6 +210,11 @@ void ChessBoard::OnPaint(wxPaintEvent & evt)
     //	dc = pdc
     // }
 
+    // Don't paint the board under 10px to avoid crash
+    if (GetClientSize().x < 10 || GetClientSize().y < 10) {
+        return;
+    }
+
     UpdateCoords();
 
     wxPaintDC pdc(this);
