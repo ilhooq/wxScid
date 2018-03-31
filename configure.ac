@@ -34,7 +34,7 @@ WX_CONFIG_OPTIONS
 WX_STANDARD_OPTIONS([debug,unicode,shared,toolkit,wxshared])
 
 WX_CONVERT_STANDARD_OPTIONS_TO_WXCONFIG_FLAGS
-WX_CONFIG_CHECK([3.0.0], [wxWin=1],,[base,core,adv,xrc,aui,richtext,html],[$WXCONFIG_FLAGS])
+WX_CONFIG_CHECK([3.0.0], [wxWin=1],,[base,core,xml,adv,xrc,aui,richtext,html],[$WXCONFIG_FLAGS])
 WX_DETECT_STANDARD_OPTION_VALUES
 
 # Initialize libtool
