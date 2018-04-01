@@ -252,16 +252,18 @@ void GameTxtCtrl::highLightCurrentMove()
 
 void GameTxtCtrl::PlayMove(int move)
 {
-    currentMove = move;
-    highLightCurrentMove();
+    if (move > 0 && move < game->size()) {
+        currentMove = move;
+        highLightCurrentMove();
 
-    GamePos pos = game->at(currentMove);
+        GamePos pos = game->at(currentMove);
 
-    wxWindow *win = (wxWindow*) this;
-    wxCommandEvent event(EVT_MAKE_MOVE);
-    event.SetEventObject(this);
-    event.SetClientData(&pos);
-    win->ProcessWindowEvent(event);
+        wxWindow *win = (wxWindow*) this;
+        wxCommandEvent event(EVT_MAKE_MOVE);
+        event.SetEventObject(this);
+        event.SetClientData(&pos);
+        win->ProcessWindowEvent(event);
+    }
 }
 
 
