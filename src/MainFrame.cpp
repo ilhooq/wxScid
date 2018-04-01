@@ -120,12 +120,12 @@ wxFrame(parent, id, title, pos, size, style)
     moveTree = new wxPanel(this);
     moveTree->SetBackgroundColour(wxColour("#e9ddaf"));
     auiManager.AddPane(moveTree, wxAuiPaneInfo()
-        .Left()
+        .Right()
         .Name(wxT("move_tree"))
         .Caption(wxT("Move tree"))
         .DefaultPane()
-        .BestSize(wxSize(300,100))
-        .MinSize(wxSize(200,100))
+        .BestSize(wxSize(600,400))
+        .MinSize(wxSize(300,200))
     );
 
     // Create game text panel
@@ -135,8 +135,8 @@ wxFrame(parent, id, title, pos, size, style)
         .Name(wxT("game_viewer"))
         .Caption(wxT("Notation"))
         .DefaultPane()
-        .BestSize(wxSize(600,600))
-        .MinSize(wxSize(350,100))
+        .BestSize(wxSize(600,400))
+        .MinSize(wxSize(300,200))
     );
 
     GameTxtCtrl *txtCtrl = new GameTxtCtrl(gameViewer, ID_CTRL_GAME_TXT);
