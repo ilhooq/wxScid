@@ -272,7 +272,7 @@ void ChessBoard::OnLeftUp(wxMouseEvent & evt)
         char squareFrom = FindSquareIndex(dragPiece);
         char squareTo = FindSquareIndex(evt.GetPosition());
 
-        if (squareFrom != squareTo) {
+        if (squareTo != -1 && squareFrom != squareTo) {
             dragPiece->SetRect(squares[squareTo].rect);
 
             // Move piece
