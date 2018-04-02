@@ -228,33 +228,26 @@ void GameTxtCtrl::WriteGame()
     EndSuppressUndo();
     win->Thaw();
 
-    highLightCurrentMove();
+    highLightMove(currentMove, true);
 }
 
-void GameTxtCtrl::highLightCurrentMove()
+void GameTxtCtrl::highLightMove(int move, bool activate)
 {
     wxRichTextAttr style;
-    wxRichTextRange range = movesRange->at(currentMove);
-
-    if (GetStyleForRange(range, style)) {
-        style.SetBackgroundColour(wxColor(220, 230, 230, wxALPHA_OPAQUE));
-        SetStyle(range, style);
-    }
-
-    if (currentMove > 1) {
-        range = movesRange->at(currentMove-1);
-        if (GetStyleForRange(range, style)) {
-            style.SetBackgroundColour(wxColor(255, 255, 255, wxALPHA_OPAQUE));
-            SetStyle(range, style);
-        }
-    }
+    wxRichTextRange range = movesRange->at(move);
+    GetStyleForRange(range, style);
+    wxColour colour = (activate)? wxColor(220, 230, 230, wxALPHA_OPAQUE) : wxColor(255, 255, 255, wxALPHA_OPAQUE);
+    style.SetBackgroundColour(colour);
+    SetStyle(range, style);
 }
 
 void GameTxtCtrl::PlayMove(int move)
 {
     if (move > 0 && move < game->size()) {
+
+        highLightMove(currentMove, false);
         currentMove = move;
-        highLightCurrentMove();
+        highLightMove(currentMove, true);
 
         GamePos pos = game->at(currentMove);
 

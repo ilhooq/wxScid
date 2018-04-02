@@ -32,7 +32,7 @@ private:
     void OnKeyDown(wxKeyEvent& evt);
     void OnURL(wxTextUrlEvent& evt);
     void WriteGame();
-    void highLightCurrentMove();
+    void highLightMove(int move, bool activate);
     void PlayMove(int move);
 
 wxDECLARE_EVENT_TABLE();
