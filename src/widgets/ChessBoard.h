@@ -15,6 +15,10 @@
 #include <wx/dragimag.h>
 #endif
 
+#include <wx/event.h>
+
+wxDECLARE_EVENT(EVT_CAN_DROP_PIECE, wxCommandEvent);
+
 class ChessBoardPiece
 {
 public:
@@ -55,6 +59,13 @@ public:
         wxASSERT(width > 0 && height > 0);
         return wxBitmap(image->Scale(width, height));
     }
+};
+
+struct PieceMove
+{
+    int from;
+    int to;
+    bool canDrop;
 };
 
 class ChessBoardSquare

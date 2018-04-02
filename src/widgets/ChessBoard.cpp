@@ -20,6 +20,8 @@ const char squareNames[64][3] =
     "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"
 };
 
+wxDEFINE_EVENT(EVT_CAN_DROP_PIECE, wxCommandEvent);
+
 BEGIN_EVENT_TABLE(ChessBoard, wxWindow)
     EVT_MOTION(ChessBoard::OnMotion)
     EVT_LEFT_DOWN(ChessBoard::OnLeftDown)
@@ -269,15 +271,23 @@ void ChessBoard::OnLeftUp(wxMouseEvent & evt)
 
     // Reposition the piece
     if (dragPiece != NULL) {
-        char squareFrom = FindSquareIndex(dragPiece);
-        char squareTo = FindSquareIndex(evt.GetPosition());
 
-        if (squareTo != -1 && squareFrom != squareTo) {
-            dragPiece->SetRect(squares[squareTo].rect);
+        PieceMove move;
+        move.from = FindSquareIndex(dragPiece);
+        move.to = FindSquareIndex(evt.GetPosition());
+        move.canDrop = true;
+
+        wxCommandEvent event(EVT_CAN_DROP_PIECE);
+        event.SetEventObject(this);
+        event.SetClientData(&move);
+        this->ProcessWindowEvent(event);
+
+        if (move.canDrop && move.to != -1 && move.from != move.to) {
+            dragPiece->SetRect(squares[move.to].rect);
 
             // Move piece
-            squares[squareFrom].piece = NULL;
-            squares[squareTo].piece = dragPiece;
+            squares[move.from].piece = NULL;
+            squares[move.to].piece = dragPiece;
         }
 
         dragPiece->show = true;
