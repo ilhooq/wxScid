@@ -220,10 +220,10 @@ void Scid::LoadGame(wxCommandEvent& evt)
 
     // The name base file in memory.
     const NameBase* nb = dbase->getNameBase();
-    wxPrintf(wxT("Enrtry requested: %d - Entry opened: %d - White : %s \n"), entry->index, ie->GetOffset(), wxString::FromUTF8(ie->GetWhiteName(nb)));
+    // wxPrintf(wxT("Enrtry requested: %d - Entry opened: %d - White : %s \n"), entry->index, ie->GetOffset(), wxString::FromUTF8(ie->GetWhiteName(nb)));
 
     std::vector<scidBaseT::GamePos> dest;
-    dbase->getGame(ie, dest);
+    dbase->getGame(*ie, dest);
 
     std::vector<scidBaseT::GamePos>::iterator it;
 

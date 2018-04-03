@@ -18,6 +18,7 @@
 #define SCID_MOVELIST_H
 
 #include "common.h"
+#include <cstring>
 #include <iterator>
 
 //////////////////////////////////////////////////////////////////////
@@ -34,13 +35,13 @@ const uint  MAX_LEGAL_MOVES = 256;  // max. length of the moves list
 //
 struct simpleMoveT
 {
-    byte     pieceNum;
-    pieceT   movingPiece;
     squareT  from;
     squareT  to;
+    pieceT   promote;
+    pieceT   movingPiece;
+    byte     pieceNum;
     byte     capturedNum;
     pieceT   capturedPiece;
-    pieceT   promote;
     squareT  capturedSquare; // ONLY different to "to" field if this capture
                             //    is an en passant capture.
     byte     castleFlags;    // pre-move information
@@ -69,6 +70,10 @@ struct simpleMoveT
 		// Highest score first
 		return score > b.score;
 	}
+
+	void clear() {
+		std::memset(this, 0, sizeof *this);
+	}
 };
 
 struct cmpMove {
@@ -81,12 +86,10 @@ inline bool operator==(const simpleMoveT& a, const cmpMove& b) {
 
 // typedef std::vector<simpleMoveT> MoveList;
 class MoveList {
-	uint ListSize;
+	uint ListSize = 0;
 	simpleMoveT Moves[MAX_LEGAL_MOVES];
 
 public:
-	MoveList() : ListSize(0) {}
-
 	typedef simpleMoveT* iterator;
 	iterator begin() { return Moves; };
 	iterator end() { return Moves + ListSize; }
@@ -110,7 +113,7 @@ public:
 		ASSERT(ListSize < MAX_LEGAL_MOVES);
 		Moves[ListSize++] = sm;
 	}
-	simpleMoveT* Get(uint index) {
+	simpleMoveT* Get(size_t index) {
 		ASSERT(index < ListSize);
 		return &(Moves[index]);
 	}

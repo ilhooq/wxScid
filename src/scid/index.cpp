@@ -130,69 +130,6 @@ Index::Open (const char* filename, fileModeT fmode)
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Index::ReadEntireFile():
-//      Reads in the entire index into memory.
-//
-errorT
-Index::ReadEntireFile (NameBase* nb, const Progress& progress)
-{
-    ASSERT (FilePtr != NULL);
-    ASSERT (entries_.size() == 0);
-
-    if (fileMode_ == FMODE_WriteOnly) { return ERROR_FileMode; }
-    entries_.resize(Header.numGames);
-
-    idNumberT maxIdx[NUM_NAME_TYPES];
-    for (nameT nt = NAME_PLAYER; nt < NUM_NAME_TYPES; nt++) {
-        maxIdx[nt] = nb->GetNumNames(nt);
-    }
-
-    gamenumT gNum = 0;
-    for (; FilePtr->sgetc() != EOF; gNum++) {
-        if (gNum == Header.numGames) return ERROR_CorruptData;
-
-        if ((gNum % 10000) == 0) {
-            if (!progress.report(gNum, Header.numGames)) return ERROR_UserCancel;
-        }
-
-        IndexEntry* ie = &(entries_[gNum]);
-        errorT err = ie->Read(FilePtr, Header.version);
-        if (err != OK) return err;
-
-        if (ie->GetWhite() >= maxIdx[NAME_PLAYER]) {
-            ie->SetWhiteName(nb, "?");
-            nInvalidNameId_++;
-        }
-        if (ie->GetBlack() >= maxIdx[NAME_PLAYER]) {
-            ie->SetBlackName(nb, "?");
-            nInvalidNameId_++;
-        }
-        if (ie->GetEvent() >= maxIdx[NAME_EVENT] ) {
-            ie->SetEventName(nb, "?");
-            nInvalidNameId_++;
-        }
-        if (ie->GetSite()  >= maxIdx[NAME_SITE]  ) {
-            ie->SetSiteName(nb, "?");
-            nInvalidNameId_++;
-        }
-        if (ie->GetRound() >= maxIdx[NAME_ROUND] ) {
-            ie->SetRoundName(nb, "?");
-            nInvalidNameId_++;
-        }
-
-        eloT eloW = ie->GetWhiteElo();
-        if (eloW > 0) nb->AddElo (ie->GetWhite(), eloW);
-        eloT eloB = ie->GetBlackElo();
-        if (eloB > 0) nb->AddElo (ie->GetBlack(), eloB);
-    }
-    progress.report(1,1);
-
-    if (gNum != Header.numGames) return ERROR_FileRead;
-    if (nInvalidNameId_ != 0) return ERROR_NameDataLoss;
-    return OK;
-}
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Index::WriteHeader():
 //      Write the header to the open index file.
 //
@@ -203,7 +140,7 @@ Index::WriteHeader ()
     if (FilePtr->pubseekpos(0) != std::streampos(0)) return ERROR_FileWrite;
 
     seqWrite_ = 0;
-    size_t n = 0;
+    std::streamsize n = 0;
     n += FilePtr->sputn(Header.magic, 8);
     n += FilePtr->WriteTwoBytes (Header.version);
     n += FilePtr->WriteFourBytes (Header.baseType);
@@ -218,10 +155,9 @@ Index::WriteHeader ()
     return OK;
 }
 
-errorT Index::write (const IndexEntry* ie, gamenumT idx)
+errorT Index::WriteEntry(const IndexEntry* ie, gamenumT idx)
 {
     if (idx > Header.numGames) return ERROR_BadArg;
-    if (idx >= MAX_GAMES) return ERROR_IndexFull;
     if (fileMode_ == FMODE_ReadOnly) { return ERROR_FileMode; }
 
     if (idx == Header.numGames) {

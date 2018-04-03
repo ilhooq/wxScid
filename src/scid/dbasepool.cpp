@@ -17,7 +17,6 @@
 */
 
 #include "dbasepool.h"
-
 #include "scidbase.h"
 
 

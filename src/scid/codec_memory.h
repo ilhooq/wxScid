@@ -18,90 +18,48 @@
  */
 
 /** @file
- * Implements the CodecMemory class, which manages the memory representation of
- * the open databases.
+ * Implements the CodecMemory class, which represent a memory database.
  */
 
 #ifndef CODEC_MEMORY_H
 #define CODEC_MEMORY_H
 
-#include "bytebuf.h"
-#include "codec.h"
-#include "common.h"
-#include "game.h"
-#include "index.h"
-#include "namebase.h"
-#include <vector>
-#include <limits>
-
-#if !CPP11_SUPPORT
-#define override
-#endif
+#include "codec_native.h"
 
 /**
  * Manages memory databases that do not have associated files.
- * This class stores the data of the games into a std::vector; derived classes
- * can override the virtual functions dyn_addGameData() and getGameData() in
- * order to store the data into a different container or file.
+ * Every open database should have a native representation in memory: to satisfy
+ * this requirement non-native codecs should be derived from this class.
  */
-class CodecMemory : public ICodecDatabase {
-protected:
-	Index* idx_;
-	NameBase* nb_;
+class CodecMemory : public CodecNative<CodecMemory> {
+	VectorChunked<byte, 24> v_;
 
-private:
-	std::vector<byte> v_;
-	ByteBuffer bbuf_;
+	enum : uint64_t {
+		LIMIT_GAMEOFFSET = 1ULL << 46,
+		LIMIT_GAMELEN = 1ULL << 18,
+		LIMIT_NUMGAMES = (1ULL << 32) - 2,
+		LIMIT_UNIQUENAMES = 1ULL << 28,
+		LIMIT_NAMELEN = 255
+	};
 
-public:
-	CodecMemory() : idx_(0), nb_(0), bbuf_(BBUF_SIZE) {}
-
+public: // ICodecDatabase interface
 	Codec getType() override { return ICodecDatabase::MEMORY; }
 
 	std::vector<std::string> getFilenames() override {
 		return std::vector<std::string>();
 	}
 
-	const byte* getGameData(uint32_t offset, uint32_t length) override {
+	const byte* getGameData(uint64_t offset, uint32_t length) override {
 		ASSERT(offset < v_.size());
 		ASSERT(length <= v_.size() - offset);
-		#if !CPP11_SUPPORT
-		return &v_.front() + offset;
-		#else
-		return v_.data() + offset;
-		#endif
-	}
-
-	errorT addGame(IndexEntry* ie, const byte* src, size_t length) override {
-		return doAddGame(ie, src, length);
-	}
-
-	errorT saveGame(IndexEntry* ie, const byte* src, size_t length,
-	                gamenumT replaced) override {
-		return doAddGame(ie, src, length, true, replaced);
-	}
-
-	errorT addGame(Game* game) override {
-		IndexEntry ie;
-		errorT err = encodeGame(game, &ie, &bbuf_);
-		if (err != OK) return err;
-
-		return doAddGame(&ie, bbuf_.getData(), bbuf_.GetByteCount());
-	}
-
-	errorT saveGame(Game* game, gamenumT replaced) override {
-		IndexEntry ie;
-		errorT err = encodeGame(game, &ie, &bbuf_);
-		if (err != OK) return err;
-
-		return doAddGame(&ie, bbuf_.getData(), bbuf_.GetByteCount(), true, replaced);
+		ASSERT(v_.contiguous(static_cast<size_t>(offset)) >= length);
+		return &v_[offset];
 	}
 
 	errorT flush() override {
 		return OK;
 	}
 
-protected:
 	errorT dyn_open(fileModeT fMode, const char*, const Progress&, Index* idx,
 	                NameBase* nb) override {
 		if (idx == 0 || nb == 0) return ERROR;
@@ -111,11 +69,9 @@ protected:
 		return OK;
 	}
 
+public: // CodecNative CRTP
 	/**
-	 * Stores the data of the game into the database.
-	 * A derived class can override this function to store the data into a
-	 * different container or file. In that case it must also override the
-	 * virtual function getGameData().
+	 * Stores the data of a game into memory.
 	 * @param src:    valid pointer to a buffer that contains the game data
 	 *                (encoded in native format).
 	 * @param length: the length of the buffer @p src (in bytes).
@@ -124,86 +80,61 @@ protected:
 	 * data (usable to retrieve the data with getGameData()).
 	 * - on failure, a @e std::pair containing an error code and 0.
 	 */
-	virtual std::pair<errorT, uint32_t> dyn_addGameData(const byte* src,
-	                                                    size_t length) {
+	std::pair<errorT, uint64_t> dyn_addGameData(const byte* src,
+	                                            size_t length) {
 		ASSERT(src != 0);
 
-		if (v_.size() >= std::numeric_limits<uint32_t>::max())
-			return std::make_pair(ERROR_Full, 0);
+		if (length >= LIMIT_GAMELEN)
+			return std::make_pair(ERROR_GameLengthLimit, 0);
 
-		uint32_t offset = v_.size();
-		v_.insert(v_.end(), src, src + length);
-		return std::make_pair(OK, offset);
-	}
+		auto offset = v_.size();
+		auto capacity = v_.capacity();
+		if (capacity - offset < length) // Do not fit in the current chunk
+			offset = capacity;
+		if (offset >= LIMIT_GAMEOFFSET)
+			return std::make_pair(ERROR_OffsetLimit, 0);
 
-private:
-	CodecMemory(const CodecMemory&);
-	CodecMemory& operator=(const CodecMemory&);
-
-	/**
-	 * Add/Replace a game into the database.
-	 * Calls the virtual function dyn_addGameData() to store the game data and
-	 * obtain the corresponding offset. The offset and the @p length are stored
-	 * in @p ie; then the game will be added/replaced in the Index object idx_.
-	 * @param ie:       valid pointer to the new header data of the game.
-	 * @param src:      valid pointer to the new game data of the game.
-	 * @param length:   length of the game data (in bytes).
-	 * @param replace:  false to add a game or true to replace an existing one.
-	 * @param replaced: valid gamenumT of the game to be replaced (used only
-	 *                  when @p replace is true).
-	 * @returns OK if successful or an error code.
-	 */
-	errorT doAddGame(IndexEntry* ie, const byte* src, size_t length,
-	                 bool replace = false, gamenumT replaced = 0) {
-		if (replace && replaced >= idx_->GetNumGames()) return ERROR_BadArg;
-
-		std::pair<errorT, uint32_t> offset = dyn_addGameData(src, length);
-		if (offset.first != OK)
-			return offset.first;
-		ie->SetOffset(offset.second);
-		ie->SetLength(length);
-
-		if (replace)
-			return idx_->WriteEntry(ie, replaced);
-		else
-			return idx_->AddGame(ie);
+		v_.resize(offset + length);
+		ASSERT(v_.contiguous(offset) >= length);
+		std::copy_n(src, length, &v_[offset]);
+		return {OK, offset};
 	}
 
 	/**
-	 * Encodes a Game object to native format.
-	 * The names are added to the member NameBase object @p nb_, if necessary.
-	 * @param game:         valid pointer to the Game object to be encoded.
-	 * @param[out] resIe:   valid pointer to the IndexEntry object that will
-	 *                      receive the encoded header data.
-	 * @param[out] resBBuf: valid pointer to the ByteBuffer object that will
-	 *                      receive the encoded games data.
+	 * Given a name (string), retrieve the corresponding ID.
+	 * The name is added to @e nb_ if do not already exists in the NameBase.
+	 * @param nt:   nameT type of the name to retrieve.
+	 * @param name: the name to retrieve.
+	 * @returns
+	 * - on success, a @e std::pair containing OK and the ID.
+	 * - on failure, a @e std::pair containing an error code and 0.
+	 */
+	std::pair<errorT, idNumberT> dyn_addName(nameT nt, const char* name) {
+		return nb_->addName(nt, name, LIMIT_NAMELEN, LIMIT_UNIQUENAMES);
+	}
+
+	/**
+	 * Add an IndexEntry to @e idx_.
+	 * @param ie: the IndexEntry object to add.
 	 * @returns OK if successful or an error code.
 	 */
-	errorT encodeGame(Game* game, IndexEntry* resIe, ByteBuffer* resBbuf) {
-		resIe->Init();
-		errorT err = game->Encode(resBbuf, resIe);
-		if (err != OK) return err;
+	errorT dyn_addIndexEntry(const IndexEntry& ie) {
+		auto nGames = idx_->GetNumGames();
+		if (nGames >= LIMIT_NUMGAMES)
+			return ERROR_NumGamesLimit;
 
-		err = resIe->SetWhiteName(nb_, game->GetWhiteStr());
-		if (err != OK) return err;
-		err = resIe->SetBlackName(nb_, game->GetBlackStr());
-		if (err != OK) return err;
-		err = resIe->SetEventName(nb_, game->GetEventStr());
-		if (err != OK) return err;
-		err = resIe->SetSiteName(nb_, game->GetSiteStr());
-		if (err != OK) return err;
-		err = resIe->SetRoundName(nb_, game->GetRoundStr());
-		if (err != OK) return err;
+		return idx_->WriteEntry(&ie, nGames);
+	}
 
-		nb_->AddElo(resIe->GetWhite(), resIe->GetWhiteElo());
-		nb_->AddElo(resIe->GetBlack(), resIe->GetBlackElo());
-
-		return err;
+	/**
+	 * Replace an IndexEntry.
+	 * @param ie:       the IndexEntry with the new data.
+	 * @param replaced: valid gamenumT of the game to be replaced.
+	 * @returns OK if successful or an error code.
+	 */
+	errorT dyn_saveIndexEntry(const IndexEntry& ie, gamenumT replaced) {
+		return idx_->WriteEntry(&ie, replaced);
 	}
 };
-
-#if !CPP11_SUPPORT
-#undef override
-#endif
 
 #endif

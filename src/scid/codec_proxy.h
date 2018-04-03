@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2017  Fulvio Benini
+ * Copyright (C) 2016-2018  Fulvio Benini
 
  * This file is part of Scid (Shane's Chess Information Database).
  *
@@ -30,8 +30,9 @@
 #include "common.h"
 #include "game.h"
 
-#if !CPP11_SUPPORT
-#define override
+#ifndef MULTITHREADING_OFF
+#include <atomic>
+#include <thread>
 #endif
 
 /**
@@ -46,7 +47,9 @@
  */
 template <typename Derived>
 class CodecProxy : public CodecMemory {
-protected:
+	Derived* getDerived() { return static_cast<Derived*>(this); }
+
+public:
 	/**
 	 * Opens/creates a database encoded in a non-native format.
 	 * @param filename: full path of the database to be opened.
@@ -59,13 +62,12 @@ protected:
 	 * Reads the next game.
 	 * A derived class implements this function to sequentially read the games
 	 * contained into the database.
-	 * @param Game*: valid pointer to the Game object where the data will be stored.
+	 * @param Game&: the Game object where the data will be stored.
 	 * @returns
-	 * - OK on success.
 	 * - ERROR_NotFound if there are no more games to be read.
-	 * - ERROR code if the game cannot be read and was skipped.
+	 * - OK otherwise.
 	 */
-	errorT parseNext(Game*) {
+	errorT parseNext(Game&) {
 		return ERROR_NotFound;
 	}
 
@@ -90,7 +92,7 @@ protected:
 	 * @param Game*: valid pointer to a Game object with the new data.
 	 * @returns OK in case of success, an @p errorT code otherwise.
 	 */
-	errorT dyn_addGame(Game*) {
+	errorT gameAdd(Game*) {
 		return ERROR_CodecUnsupFeat;
 	}
 
@@ -100,59 +102,58 @@ protected:
 	 * @param gamenumT: valid gamenumT of the game to be replaced.
 	 * @returns OK in case of success, an @p errorT code otherwise.
 	 */
-	errorT dyn_saveGame(Game*, gamenumT) {
+	errorT gameSave(Game*, gamenumT) {
 		return ERROR_CodecUnsupFeat;
 	}
 
 
 private:
-	errorT addGame(Game* game) override {
-		errorT err = getDerived()->dyn_addGame(game);
+	errorT addGame(Game* game) final {
+		errorT err = getDerived()->gameAdd(game);
 		if (err != OK) return err;
 
 		return CodecMemory::addGame(game);
 	}
 
-	errorT saveGame(Game* game, gamenumT replaced) override {
-		errorT err = getDerived()->dyn_saveGame(game, replaced);
+	errorT saveGame(Game* game, gamenumT replaced) final {
+		errorT err = getDerived()->gameSave(game, replaced);
 		if (err != OK) return err;
 
 		return CodecMemory::saveGame(game, replaced);
 	}
 
-	errorT addGame(IndexEntry* ie, const byte* src, size_t length) override {
+	errorT addGame(const IndexEntry* srcIe, const NameBase* srcNb,
+	               const byte* srcData, size_t dataLen) final {
+		ByteBuffer buf(0);
+		buf.ProvideExternal(const_cast<byte*>(srcData), dataLen);
 		Game game;
-		errorT err = decodeGame(ie, src, length, game);
+		errorT err = game.Decode(&buf, GAME_DECODE_ALL);
+		if (err == OK)
+			err = game.LoadStandardTags(srcIe, srcNb);
 		if (err != OK) return err;
 
-		err = getDerived()->dyn_addGame(&game);
+		err = getDerived()->gameAdd(&game);
 		if (err != OK) return err;
 
-		return CodecMemory::addGame(ie, src, length);
+		return CodecMemory::addGame(srcIe, srcNb, srcData, dataLen);
 	}
 
-	errorT saveGame(IndexEntry* ie, const byte* src, size_t length,
-	                gamenumT replaced) override {
-		Game game;
-		errorT err = decodeGame(ie, src, length, game);
-		if (err != OK) return err;
+	errorT saveIndexEntry(const IndexEntry&, gamenumT) final {
+		return ERROR_CodecUnsupFeat;
+	}
 
-		err = getDerived()->dyn_saveGame(&game, replaced);
-		if (err != OK) return err;
-
-		return CodecMemory::saveGame(ie, src, length, replaced);
+	std::pair<errorT, idNumberT> addName(nameT, const char*) final {
+		return std::pair<errorT, idNumberT>(ERROR_CodecUnsupFeat, 0);
 	}
 
 	/*
-	 * Creates a memory database and invokes the function open(), which will
-	 * open the non-native database @p filename. Subsequently, the function
-	 * parseNext() is repeatedly called until it returns ERROR_NotFound, and
-	 * the games are copied into the memory database.
+	 * Create a memory database, open the non-native database @p filename and
+	 * copy all the games into the memory database.
 	 */
 	errorT dyn_open(fileModeT fMode, const char* filename,
-	                const Progress& progress, Index* idx,
-	                NameBase* nb) override {
-		if (filename == 0) return ERROR;
+	                const Progress& progress, Index* idx, NameBase* nb) final {
+		if (filename == 0)
+			return ERROR;
 
 		errorT err = CodecMemory::dyn_open(FMODE_Memory, filename, progress, idx, nb);
 		if (err != OK) return err;
@@ -160,53 +161,112 @@ private:
 		err = getDerived()->open(filename, fMode);
 		if (err != OK) return err;
 
-		Game g;
-		uint nImported = 0;
-		while ((err = getDerived()->parseNext(&g)) != ERROR_NotFound) {
-			if (err != OK) continue;
+		return parseGames(progress, *getDerived(), [&](Game& game) {
+			return this->CodecMemory::addGame(&game);
+		});
+	}
 
-			err = CodecMemory::addGame(&g);
+public:
+	/*
+	 * Given a source database of type CodecProxy<T>, for each game a
+	 * corresponding Game object is created and dispatched to @e destFn.
+	 */
+	template <typename TProgress, typename TSource, typename TDestFn>
+	static errorT parseGames(const TProgress& progress, TSource& src,
+	                         TDestFn destFn) {
+#ifndef MULTITHREADING_OFF
+		auto workTotal = src.parseProgress().second;
+
+		Game game[4];
+		std::atomic<size_t> workDone{};
+		std::atomic<int8_t> sync[4] = {};
+		enum {sy_free, sy_used, sy_stop};
+
+		std::thread producer([&]() {
+			uint64_t slot;
+			uint64_t nProduced = 0;
+			while (true) {
+				slot = nProduced % 4;
+				int sy;
+				while (true) { // spinlock if the slot is in use
+					sy = sync[slot].load(std::memory_order_acquire);
+					if (sy == sy_used)
+						std::this_thread::yield();
+					else
+						break;
+				};
+				if (sy == sy_stop)
+					break;
+
+				if (src.parseNext(game[slot]) == ERROR_NotFound)
+					break;
+
+				if (++nProduced % 1024 == 0) {
+					workDone.store(src.parseProgress().first,
+					               std::memory_order_release);
+				}
+
+				sync[slot].store(sy_used, std::memory_order_release);
+			}
+			sync[slot].store(sy_stop, std::memory_order_release);
+		});
+
+		// Consumer
+		errorT err = OK;
+		uint64_t slot;
+		uint64_t nImported = 0;
+		while (true) {
+			slot = nImported % 4;
+			int sy;
+			while (true) { // spinlock if the slot is empty
+				sy = sync[slot].load(std::memory_order_acquire);
+				if (sy == sy_free)
+					std::this_thread::yield();
+				else
+					break;
+			};
+			if (sy == sy_stop)
+				break;
+
+			if (++nImported % 1024 == 0) {
+				if (!progress.report(workDone.load(std::memory_order_acquire),
+				                     workTotal)) {
+					err = ERROR_UserCancel;
+					break;
+				}
+			}
+
+			err = destFn(game[slot]);
+			if (err != OK) break;
+
+			sync[slot].store(sy_free, std::memory_order_release);
+		}
+		sync[slot].store(sy_stop, std::memory_order_release);
+
+		producer.join();
+		progress(1, 1, src.parseErrors());
+		return err;
+
+#else
+		Game g;
+		errorT err = OK;
+		uint64_t nImported = 0;
+		while (src.parseNext(g) != ERROR_NotFound) {
+			err = destFn(g);
 			if (err != OK) break;
 
 			if (++nImported % 1024 == 0) {
-				std::pair<size_t, size_t> count = getDerived()->parseProgress();
+				std::pair<size_t, size_t> count = src.parseProgress();
 				if (!progress.report(count.first, count.second)) {
 					err = ERROR_UserCancel;
 					break;
 				}
 			}
 		}
-		progress(1, 1, getDerived()->parseErrors());
-
-		return (err == ERROR_NotFound) ? OK : err;
-	}
-
-	/**
-	 * Decodes a Game object from native format.
-	 * @param srcIe:        valid pointer to the header data.
-	 * @param src:          valid pointer to a buffer containing the game data
-	 *                      (encoded in native format).
-	 * @param length:       length of the game data (in bytes).
-	 * @param[out] resGame: the Game object where the data will be decoded.
-	 * @returns OK in case of success, an @p errorT code otherwise.
-	 */
-	errorT decodeGame(const IndexEntry* srcIe, const byte* src, size_t length,
-	                  Game& resGame) {
-		ByteBuffer buf(0);
-		buf.ProvideExternal(const_cast<byte*>(src), length);
-		errorT err = resGame.Decode(&buf, GAME_DECODE_ALL);
-		if (err == OK) err = resGame.LoadStandardTags(srcIe, nb_);
+		progress(1, 1, src.parseErrors());
 		return err;
-	}
-
-	/**
-	 * Return a pointer to the derived class.
-	 */
-	Derived* getDerived() { return static_cast<Derived*>(this); }
-};
-
-#if !CPP11_SUPPORT
-#undef override
 #endif
+	}
+};
 
 #endif

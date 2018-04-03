@@ -19,6 +19,7 @@
 #define SCID_MISC_H
 
 #include "common.h"
+#include <algorithm>
 #include <string>
 #include <cstring>
 #include <stdio.h>
@@ -58,67 +59,6 @@ public:
 		return true;
 	}
 };
-
-
-/**
- * class VectorBig - store data into chunks to avoid (or minimize) reallocations
- * @CHUNKSHIFT:	is the base-2 logarithm of the number of T entries per chunk.
- *              Total size of a chunk: (2^CHUNKSHIFT)*sizeof(T)
- * resize()   : Used to avoid reallocations.
- *              Very efficient because it allocates space only for chunk pointers
- *              i.e with @count==16777214 and @CHUNKSHIFT==16 will use 256 pointers
- */
-template <class T, size_t CHUNKSHIFT>
-class VectorBig {
-	std::vector<T*> index_;
-	size_t size_;
-
-public:
-	VectorBig() : size_(0) {}
-	VectorBig(const VectorBig&);
-	VectorBig& operator=(const VectorBig&);
-	~VectorBig() { resize(0); }
-
-	const T& operator[] (size_t idx) const {
-		const size_t low_mask = ((1 << CHUNKSHIFT) - 1);
-		return index_[idx >> CHUNKSHIFT][idx & low_mask];
-	}
-	T& operator[] (size_t idx) {
-		const size_t low_mask = ((1 << CHUNKSHIFT) - 1);
-		return index_[idx >> CHUNKSHIFT][idx & low_mask];
-	}
-
-	size_t size() const {
-		return size_;
-	}
-
-	void reserve(size_t count) {
-		index_.reserve(1 + (count >> CHUNKSHIFT));
-	}
-
-	void resize(size_t count) {
-		size_ = count;
-		size_t index_NewSize = (count > 0) ? 1 + (count >> CHUNKSHIFT) : 0;
-
-		while (index_.size() > index_NewSize) {
-			delete [] index_.back();
-			index_.pop_back();
-		}
-		while (index_.size() < index_NewSize) {
-			index_.push_back(new T[1 << CHUNKSHIFT]);
-		}
-	}
-	void resize(size_t count, const T& defaulVal) {
-		size_t i = size_;
-		resize(count);
-		while (i < count) (*this)[i++] = defaulVal;
-	}
-
-	void push_back(const T& e) {
-		resize(size_ + 1, e);
-	}
-};
-
 
 
 class Progress {
@@ -224,21 +164,14 @@ const char * strFirstChar (const char * target, char matchChar);
 const char * strLastChar (const char * target, char matchChar);
 void   strStrip (char * str, char ch);
 
-static const char WHITESPACE[6] = " \t\r\n";
 const char * strTrimLeft (const char * target, const char * trimChars);
 inline const char * strTrimLeft (const char * target) {
-    return strTrimLeft (target, WHITESPACE);
-}
-uint   strTrimRight (char * target, const char * trimChars);
-inline uint strTrimRight (char * target) {
-    return strTrimRight (target, WHITESPACE);
+    return strTrimLeft (target, " \t\r\n");
 }
 uint   strTrimSuffix (char * target, char suffixChar);
 void   strTrimDate (char * str);
 void   strTrimMarkCodes (char * str);
 void   strTrimMarkup (char * str);
-void   strTrimSurname (char * str, uint initials);
-inline void strTrimSurname (char * str) { strTrimSurname (str, 0); }
 const char * strFirstWord (const char * str);
 const char * strNextWord (const char * str);
 
@@ -249,7 +182,6 @@ strPlural (uint x) {
     return (x == 1 ? "" : "s");
 }
 
-bool   strIsAllWhitespace (const char * str);
 bool   strIsUnknownName (const char * str);
 
 // strIsSurnameOnly: returns true if a string appears to only
@@ -504,27 +436,19 @@ strLength (const char * str)
 //      end characters that match the trimChars.
 //      Returns the number of characters trimmed.
 //      E.g., strTrimRight("abcyzyz", "yz") would leave the string
-//      as "abc" and return 4.
-inline uint strTrimRight (char* target, const char* trimChars)
-{
-	int oldSz = strlen(target);
-	int sz = oldSz;
-	while (--sz >= 0) {
-		if (std::strchr(trimChars, target[sz]) == 0) break;
+//      as "abc".
+inline void strTrimRight(char* target, const char* trimChars, size_t nTrimCh) {
+	const char* endTrim = trimChars + nTrimCh;
+	size_t iCh = strlen(target);
+	for (; iCh > 0; --iCh) {
+		if (std::find(trimChars, endTrim, target[iCh - 1]) == endTrim)
+			break;
 	}
-	if (++sz == oldSz) return 0;
-	target[sz] = 0;
-	return oldSz - sz;
+	target[iCh] = '\0';
 }
-
-
-//////////////////////////////////////////////////////////////////////
-//   FILE I/O Routines.
-// TODO: remove this functions
-
-uint    fileSize (const char * name, const char * suffix);
-uint    rawFileSize (const char * name);
-uint    gzipFileSize (const char * name);
+inline void strTrimRight(char* target) {
+	return strTrimRight(target, " \t\r\n", 4);
+}
 
 #endif  // #ifdef SCID_MISC_H
 

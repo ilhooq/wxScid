@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2017  Fulvio Benini
+ * Copyright (C) 2016-2018  Fulvio Benini
 
  * This file is part of Scid (Shane's Chess Information Database).
  *
@@ -18,48 +18,46 @@
  */
 
 /** @file
- * Implements the CodecScid4 class, which manages the databases encoded
- * in Scid format version 4.
+ * Implements the CodecSCID4 class that manages databases encoded in SCID
+ * format v4.
  */
 
 #ifndef CODEC_SCID4_H
 #define CODEC_SCID4_H
 
-#include "codec_memory.h"
-#include "common.h"
+#include "codec_native.h"
 #include "filebuf.h"
-
-#if !CPP11_SUPPORT
-#define override
-#endif
+#include <limits>
 
 /**
- * This class manages databases encoded in Scid format v4.
+ * This class manages databases encoded in SCID format v4.
  */
-class CodecScid4 : public CodecMemory {
-	std::string filename_;
+class CodecSCID4 : public CodecNative<CodecSCID4> {
+	std::vector<std::string> filenames_;
 	FilebufAppend gfile_;
-	char gamecache_[128*1024];
+	char gamecache_[1ULL << 17];
 
-public:
-	Codec getType() override { return ICodecDatabase::SCID4; }
+	enum : uint64_t {
+		LIMIT_GAMEOFFSET = 1ULL << 32,
+		LIMIT_GAMELEN = 1ULL << 17,
+		LIMIT_NUMGAMES = 16777214ULL, // Three bytes -1 because GetAutoLoad uses
+		                              // 0 to mean "no autoload"
+		LIMIT_NAMELEN = 255
+	};
+
+public: // ICodecDatabase interface
+	Codec getType() final { return ICodecDatabase::SCID4; }
 
 	/**
 	 * Returns the full path of the three files (index, namebase and gamefile)
 	 * used by the database.
 	 */
-	std::vector<std::string> getFilenames() override {
-		std::vector<std::string> res;
-		res.push_back(filename_ + INDEX_SUFFIX);
-		res.push_back(filename_ + NameBase::Suffix());
-		res.push_back(filename_ + ".sg4");
-		return res;
-	};
+	std::vector<std::string> getFilenames() final { return filenames_; };
 
-	const byte* getGameData(uint32_t offset, uint32_t length) override {
+	const byte* getGameData(uint64_t offset, uint32_t length) final {
 		if (offset >= gfile_.size())
 			return NULL;
-		if (length > sizeof(gamecache_))
+		if (length >= LIMIT_GAMELEN)
 			return NULL;
 
 		if (gfile_.pubseekpos(offset) == -1)
@@ -70,69 +68,39 @@ public:
 		return reinterpret_cast<const byte*>(gamecache_);
 	}
 
-	errorT flush() override {
-		errorT err = CodecMemory::flush();
-		if (err != OK) return err;
+	errorT flush() final;
 
-		err = idx_->flush();
-		if (err == OK) {
-			// *** Compatibility ***
-			// Even if name's frequency is no longer used, it's necessary to
-			// keep the compatibility with older Scid versions, forcing a
-			// recalculation.
-			nb_->hackedNameFreq();
-			err = nb_->flush(idx_);
-		}
-		errorT errGfile = (gfile_.pubsync() == 0) ? OK : ERROR_FileWrite;
+	errorT dyn_open(fileModeT, const char*, const Progress&, Index*,
+	                NameBase*) final;
 
-		return (err == OK) ? errGfile : err;
-	}
-
-protected:
-	errorT dyn_open(fileModeT fMode, const char* filename,
-	                const Progress& progress, Index* idx,
-	                NameBase* nb) override {
-		if (filename == 0 || idx == 0 || nb == 0) return ERROR;
-
-		errorT err = CodecMemory::dyn_open(FMODE_Memory, 0, progress, idx, nb);
-		if (err != OK) return err;
-
-		filename_ = filename;
-		if (filename_.empty()) return ERROR_FileOpen;
-
-		err = gfile_.open(filename_ + ".sg4", fMode);
-		if (err != OK) return err;
-
-		if (fMode == FMODE_Create) {
-			err = idx->Create(filename);
-			if (err == OK) err = nb->Create(filename);
-		} else {
-			err = idx->Open(filename, fMode);
-			if (err == OK) err = nb->ReadEntireFile(filename);
-			if (err == OK) err = idx->ReadEntireFile(nb, progress);
-		}
-
-		return err;
-	}
-
-	std::pair<errorT, uint32_t> dyn_addGameData(const byte* src,
-	                                            size_t length) override {
+public: // CodecNative interface
+	/**
+	 * Stores the data into the .sg4 file.
+	 * @param src:    valid pointer to a buffer that contains the game data
+	 *                (encoded in native format).
+	 * @param length: the length of the buffer @e src (in bytes).
+	 * @returns
+	 * - on success, a @e std::pair containing OK and the offset of the stored
+	 *   data (needed for retrieving the data with getGameData()).
+	 * - on failure, a @e std::pair containing an error code and 0.
+	 */
+	std::pair<errorT, uint64_t> dyn_addGameData(const byte* src,
+	                                            size_t length) {
 		ASSERT(src != 0);
 		const char* data = reinterpret_cast<const char*>(src);
 
-		// The Scid4 format uses 32-bits to store games' offset.
-		size_t offset = gfile_.size();
-		static const uint32_t MAXSZ = std::numeric_limits<uint32_t>::max();
-		if (offset >= MAXSZ || length >= MAXSZ - offset)
-			return std::make_pair(ERROR_Full, 0);
+		if (length >= LIMIT_GAMELEN)
+			return std::make_pair(ERROR_GameLengthLimit, 0);
 
-		// The Scid4 format stores games into blocks of 128KB.
+		// The SCID4 format uses 32-bits to store games' offset.
+		uint64_t offset = gfile_.size();
+		if (offset >= LIMIT_GAMEOFFSET - length)
+			return std::make_pair(ERROR_OffsetLimit, 0);
+
+		// The SCID4 format stores games into blocks of 128KB.
 		// If the current block does not have enough space, we fill it with
 		// random data and use the next one.
-		static const size_t GF_BLOCK = 128 * 1024;
-		if (length > GF_BLOCK)
-			return std::make_pair(ERROR_Full, 0);
-		size_t blockSpace = GF_BLOCK - (offset % GF_BLOCK);
+		uint64_t blockSpace = LIMIT_GAMELEN - (offset % LIMIT_GAMELEN);
 		if (blockSpace < length) {
 			errorT err = gfile_.append(data, blockSpace);
 			if (err != OK)
@@ -141,12 +109,53 @@ protected:
 		}
 
 		errorT err = gfile_.append(data, length);
-		return std::make_pair(err, uint32_t(offset));
+		return std::make_pair(err, offset);
 	}
-};
 
-#if !CPP11_SUPPORT
-#undef override
-#endif
+	/**
+	 * Given a name (string), retrieve the corresponding ID.
+	 * The name is added to @e nb_ if do not already exists in the NameBase.
+	 * @param nt:   nameT type of the name to retrieve.
+	 * @param name: the name to retrieve.
+	 * @returns
+	 * - on success, a @e std::pair containing OK and the ID.
+	 * - on failure, a @e std::pair containing an error code and 0.
+	 */
+	std::pair<errorT, idNumberT> dyn_addName(nameT nt, const char* name) {
+		const idNumberT MAX_ID[] = {
+		    1048575, /* Player names: Maximum of 2^20 -1 = 1,048,575 */
+		    524287,  /* Event names:  Maximum of 2^19 -1 =   524,287 */
+		    524287,  /* Site names:   Maximum of 2^19 -1 =   524,287 */
+		    262143   /* Round names:  Maximum of 2^18 -1 =   262,143 */
+		};
+		return nb_->addName(nt, name, LIMIT_NAMELEN, MAX_ID[nt]);
+	}
+
+	/**
+	 * Add an IndexEntry to @e idx_.
+	 * @param ie: the IndexEntry object to add.
+	 * @returns OK if successful or an error code.
+	 */
+	errorT dyn_addIndexEntry(const IndexEntry& ie) {
+		auto nGames = idx_->GetNumGames();
+		if (nGames >= LIMIT_NUMGAMES)
+			return ERROR_NumGamesLimit;
+
+		return idx_->WriteEntry(&ie, nGames);
+	}
+
+	/**
+	 * Replace an IndexEntry.
+	 * @param ie:       the IndexEntry with the new data.
+	 * @param replaced: valid gamenumT of the game to be replaced.
+	 * @returns OK if successful or an error code.
+	 */
+	errorT dyn_saveIndexEntry(const IndexEntry& ie, gamenumT replaced) {
+		return idx_->WriteEntry(&ie, replaced);
+	}
+
+private:
+	errorT readIndex(const Progress& progress);
+};
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2017  Fulvio Benini
+ * Copyright (C) 2016-2018  Fulvio Benini
 
  * This file is part of Scid (Shane's Chess Information Database).
  *
@@ -27,72 +27,105 @@
 
 #include "codec_proxy.h"
 #include "common.h"
-#include "mfile.h"
+#include "filebuf.h"
 #include "pgnparse.h"
-
-#if !CPP11_SUPPORT
-#define override
-#endif
+#include <algorithm>
+#include <vector>
 
 class CodecPgn : public CodecProxy<CodecPgn> {
-	PgnParser parser_;
+	Filebuf file_;
+	std::streamsize fileSize_ = 0;
 	std::string filename_;
-	size_t fileSize_;
-	MFile file_;
+	std::vector<char> buf_;
+	size_t nParsed_ = 0;
+	size_t nRead_ = 0;
+	PgnParseLog parseLog_;
 
 public:
-	Codec getType() override { return ICodecDatabase::PGN; }
+	Codec getType() final { return ICodecDatabase::PGN; }
 
-	std::vector<std::string> getFilenames() override {
+	std::vector<std::string> getFilenames() final {
 		return std::vector<std::string>(1, filename_);
 	};
 
-	errorT flush() override {
-		file_.Flush();
-		return CodecProxy<CodecPgn>::flush();
+	errorT flush() final {
+		errorT errFile = (file_.pubsync() == 0) ? OK : ERROR_FileWrite;
+		errorT errProxy = CodecProxy<CodecPgn>::flush();
+		return (errFile != OK) ? errFile : errProxy;
 	}
 
 	/**
 	 * Opens/creates a PGN database.
-	 * After successfully opening/creating the file, the PgnParser object @e
-	 * parser_ is initialized to be ready for parseNext() calls.
+	 * After successfully opening/creating the file, the object is ready for
+	 * parseNext() calls.
 	 * @param filename: full path of the pgn file to be opened.
 	 * @param fMode:    valid file access mode.
 	 * @returns OK in case of success, an @p errorT code otherwise.
 	 */
 	errorT open(const char* filename, fileModeT fmode) {
+		ASSERT(filename && !file_.is_open());
 		filename_ = filename;
-		if (filename_.empty()) return ERROR_FileOpen;
+		if (filename_.empty())
+			return ERROR_FileOpen;
 
-		errorT res = (fmode != FMODE_Create)
-		                 ? file_.Open(filename, fmode)
-		                 : file_.Create(filename, FMODE_Both);
+		errorT err_open = file_.Open(filename, fmode);
+		if (err_open != OK)
+			return err_open;
 
-		if (res == OK) {
-			if (fmode == FMODE_Create) {
-				fileSize_ = 0;
-			} else {
-				fileSize_ = fileSize(filename, "");
-				if (fileSize_ == 0 && !file_.EndOfFile())
-					return ERROR_FileOpen;
-			}
-			parser_.Reset(&file_);
-			parser_.IgnorePreGameText();
-		}
+		buf_.resize(128 * 1024);
+		nRead_ = nParsed_ = buf_.size();
+		file_.pubsetbuf(nullptr, nRead_); // Optimization
 
-		return res;
+		fileSize_ = file_.pubseekoff(0, std::ios::end);
+		file_.pubseekpos(0);
+		if (fileSize_ < 0)
+			return ERROR_FileSeek;
+
+		return OK;
 	}
 
 	/**
 	 * Reads the next game.
-	 * @param g: valid pointer to the Game object where the data will be stored.
+	 * @param game: the Game object where the data will be stored.
 	 * @returns
-	 * - OK on success.
 	 * - ERROR_NotFound if there are no more games to be read.
-	 * - ERROR code if the game cannot be read and was skipped.
+	 * - OK otherwise.
 	 */
-	errorT parseNext(Game* g) {
-		return parser_.ParseGame(g);
+	errorT parseNext(Game& game) {
+		const auto verge = 3 * (nRead_ / 4);
+		if (nParsed_ > verge && nRead_ == buf_.size()) {
+			nParsed_ -= verge;
+			nRead_ -= verge;
+			std::copy_n(buf_.data() + verge, nRead_, buf_.data());
+			nRead_ += file_.sgetn(buf_.data() + nRead_, verge);
+		}
+
+		game.Clear();
+		PgnVisitor visitor(game);
+		auto parse = pgn::parse_game(
+		    {buf_.data() + nParsed_, buf_.data() + nRead_}, visitor);
+
+		bool eof = (nRead_ - nParsed_ == parse.first);
+		if (eof && nRead_ == buf_.size()) {
+			// Reached the end of input, but the file contains more bytes.
+			if (nRead_ <= 128 * 1024 * 1024) {
+				// Double the buffer size and retry.
+				buf_.resize(nRead_ * 2);
+				nRead_ += file_.sgetn(buf_.data() + nRead_, nRead_);
+				return parseNext(game);
+			}
+			// Abort
+			nRead_ = nParsed_ = 0;
+			parseLog_.log.append("PGN parsing aborted.\n");
+			return ERROR_NotFound;
+		}
+
+		nParsed_ += parse.first;
+		parseLog_.logGame(parse.first, visitor);
+		if (eof && !parse.second && *game.GetMoveComment() == '\0')
+			return ERROR_NotFound;
+
+		return OK;
 	}
 
 	/**
@@ -101,38 +134,33 @@ public:
 	 * data parsed and second one is the total amount of data of the database.
 	 */
 	std::pair<size_t, size_t> parseProgress() {
-		return std::make_pair(size_t(parser_.BytesUsed()) / 1024, fileSize_ / 1024);
+		return std::make_pair(parseLog_.n_bytes / 1024, fileSize_ / 1024);
 	}
 
 	/**
 	 * Returns the list of errors produced by parseNext() calls.
 	 */
-	const char* parseErrors() {
-		return parser_.ErrorMessages();
-	}
+	const char* parseErrors() { return parseLog_.log.c_str(); }
 
-public:
 	/**
 	 * Add a game into the database.
 	 * The @e game is encoded in pgn format and appended at the end of @e file_.
 	 * @param game: valid pointer to a Game object with the new data.
 	 * @returns OK in case of success, an @e errorT code otherwise.
 	 */
-	errorT dyn_addGame(Game* game) {
+	errorT gameAdd(Game* game) {
 		game->SetPgnFormat(PGN_FORMAT_Plain);
 		game->ResetPgnStyle(PGN_STYLE_TAGS | PGN_STYLE_VARS |
 		                    PGN_STYLE_COMMENTS | PGN_STYLE_SCIDFLAGS);
 		std::pair<const char*, unsigned> pgn = game->WriteToPGN(75, true);
 
-		file_.Seek(fileSize_);
-		errorT err = file_.WriteNBytes(pgn.first, pgn.second);
-		if (err == OK) fileSize_ += pgn.second;
-		return err;
+		file_.pubseekpos(fileSize_);
+		if (file_.sputn(pgn.first, pgn.second) == pgn.second) {
+			fileSize_ += pgn.second;
+			return OK;
+		}
+		return ERROR_FileWrite;
 	}
 };
-
-#if !CPP11_SUPPORT
-#undef override
-#endif
 
 #endif

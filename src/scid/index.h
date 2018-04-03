@@ -22,10 +22,12 @@
 #define SCID_INDEX_H
 
 #include "common.h"
+#include "containers.h"
 #include "date.h"
 #include "indexentry.h"
 #include "filebuf.h"
 #include "hfilter.h"
+#include <array>
 #include <string>
 #include <vector>
 #include <cstring>
@@ -38,10 +40,6 @@ class NameBase;
 const char         INDEX_SUFFIX[]     = ".si4";
 const char         OLD_INDEX_SUFFIX[] = ".si3";
 const char         INDEX_MAGIC[8]     = "Scid.si";
-// max. number of games is 2^(3*8)-1-1,
-// The "2^(3*8)-1" as si4 only uses three bytes to store this integer,
-// The second "-1" because GetAutoLoad uses 0 to mean "no autoload"
-const gamenumT     MAX_GAMES          = 16777214;
 
 // Descriptions can be up to 107 bytes long.
 const uint  SCID_DESC_LENGTH = 107;
@@ -65,7 +63,7 @@ private:
     // To avoid the slow reallocation when adding games we split the data in chunks.
     // CHUNKSHIFT is the base-2 logarithm of the number of index entries allocated as one chunk.
     // i.e 16 = 2^16 = 65536 (total size of one chunk: 65536*48 = 3MB)
-    VectorBig<IndexEntry, 16> entries_; // A two-level array of the entire index.
+    VectorChunked<IndexEntry, 16> entries_; // A two-level array of the entire index.
     Filebuf*     FilePtr;       // filehandle for opened index file.
     fileModeT    fileMode_;     // Mode: e.g. FILE_WRITEONLY
     int nInvalidNameId_;
@@ -84,14 +82,15 @@ private:
         bool        dirty_;      // If true, Header needs rewriting to disk.
     } Header;
 
+    friend class CodecSCID4;
+
 public:
-    Index()  { entries_.reserve(MAX_GAMES); Init(); }
+    Index()  { Init(); }
     Index(const Index&);
     Index& operator=(const Index&);
     ~Index() { Clear(); }
 
     errorT Open(const char* filename, fileModeT fmode);
-    errorT ReadEntireFile (NameBase* nb, const Progress& progress);
     errorT Create(const char* filename);
     errorT Close() { return Clear(); }
 
@@ -119,12 +118,12 @@ public:
      * This functions counts how many times every names contained in @nb
      * is used and store the result into a corresponding record in @resVec
      */
-    void calcNameFreq(const NameBase& nb, std::vector<int>(&resVec)[NUM_NAME_TYPES]) const {
+    std::array<std::vector<int>, NUM_NAME_TYPES>
+    calcNameFreq(const NameBase& nb) const {
+        std::array<std::vector<int>, NUM_NAME_TYPES> resVec;
         for (nameT n = NAME_PLAYER; n < NUM_NAME_TYPES; n++) {
-            resVec[n].clear();
             resVec[n].resize(nb.GetNumNames(n), 0);
         }
-
         for (gamenumT i = 0, n = GetNumGames(); i < n; i++) {
             const IndexEntry* ie = GetEntry(i);
             resVec[NAME_PLAYER][ie->GetWhite()] += 1;
@@ -133,6 +132,7 @@ public:
             resVec[NAME_SITE][ie->GetSite()] += 1;
             resVec[NAME_ROUND][ie->GetRound()] += 1;
         }
+        return resVec;
     }
 
     /**
@@ -214,24 +214,7 @@ public:
     /**
      * WriteEntry() - modify a game in the Index
      */
-    errorT WriteEntry (const IndexEntry* ie, gamenumT idx, bool flush = true) {
-        errorT res = write(ie, idx);
-        if (flush && res == OK) res = this->flush();
-        return res;
-    }
-
-    /**
-     * AddGame() - add a game to the Index
-     * @ie: valid pointer to the IndexEntry object with data for the new game.
-     *
-     * For performance reasons this function can cache the changes and they are
-     * automatically written to file when the object is destroyed or closed.
-     * However, for maximum security against power loss, crash, etc, it is
-     * recommended to call the function flush() after using this function.
-     */
-    errorT AddGame (const IndexEntry* ie) {
-        return WriteEntry(ie, GetNumGames(), false);
-    }
+    errorT WriteEntry(const IndexEntry* ie, gamenumT idx);
 
     /**
      * flush() - writes all cached data to the file
@@ -246,7 +229,6 @@ public:
 private:
     void Init ();
     errorT Clear ();
-    errorT write (const IndexEntry* ie, gamenumT idx);
     errorT WriteHeader ();
 };
 

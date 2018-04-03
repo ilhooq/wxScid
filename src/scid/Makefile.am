@@ -11,13 +11,12 @@ libscid_la_SOURCES = \
 	scidbase.cpp \
 	bytebuf.cpp \
 	dbasepool.cpp \
+	codec_scid4.cpp \
 	game.cpp \
 	index.cpp \
 	matsig.cpp \
 	mfile.cpp \
 	misc.cpp \
-	namebase.cpp \
-	pgnparse.cpp \
 	position.cpp \
 	sortcache.cpp \
 	stored.cpp \
@@ -31,7 +30,7 @@ libscid_la_LDFLAGS = \
 # -export-symbols-regex ^scid_
 
 # Compiler options.
-libscid_la_CPPFLAGS = -std=c++11
+libscid_la_CPPFLAGS = -std=c++14
 
 MAINTAINERCLEANFILES = \
 	Makefile.in

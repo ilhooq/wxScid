@@ -26,45 +26,40 @@
 #include <algorithm>
 #include <math.h>
 
-ICodecDatabase* ICodecDatabase::make(Codec codec, errorT* resError,
-                                     fileModeT fMode, const char* filename,
-                                     const Progress& progress, Index* idx,
-                                     NameBase* nb) {
-	ICodecDatabase* res = 0;
-	errorT err = ERROR;
-	switch (codec) {
-	case ICodecDatabase::MEMORY:
-		res = new CodecMemory();
-		break;
-	case ICodecDatabase::SCID4:
-		res = new CodecScid4();
-		break;
-	case ICodecDatabase::PGN:
-		res = new CodecPgn();
-		break;
-	}
-
-	if (res != 0) {
-		err = res->dyn_open(fMode, filename, progress, idx, nb);
-		if (err != OK && err != ERROR_NameDataLoss) {
-			delete res;
-			res = 0;
+std::pair<ICodecDatabase*, errorT>
+ICodecDatabase::open(Codec codec, fileModeT fMode, const char* filename,
+                     const Progress& progress, Index* idx, NameBase* nb) {
+	auto createCodec = [](auto codec) -> ICodecDatabase* {
+		switch (codec) {
+		case ICodecDatabase::MEMORY:
+			return new CodecMemory();
+		case ICodecDatabase::SCID4:
+			return new CodecSCID4();
+		case ICodecDatabase::PGN:
+			return new CodecPgn();
 		}
+		ASSERT(0);
+		return nullptr;
+	};
+
+	auto obj = createCodec(codec);
+	auto err = obj->dyn_open(fMode, filename, progress, idx, nb);
+	if (err != OK && err != ERROR_NameDataLoss) {
+		delete obj;
+		obj = nullptr;
 	}
-	if (resError) *resError = err;
-	return res;
+	return {obj, err};
 }
 
 scidBaseT::scidBaseT() {
 	idx = new Index;
-	nb = new NameBase;
+	nb_ = new NameBase;
 	game = new Game;
 	gameNumber = -1;
 	gameAltered = false;
 	inUse = false;
 	tree.moveCount = tree.totalCount = 0;
 	fileMode_ = FMODE_None;
-	codec_ = 0;
 	bbuf = new ByteBuffer(BBUF_SIZE);
 	dbFilter = new Filter(0);
 	treeFilter = new Filter(0);
@@ -78,7 +73,7 @@ scidBaseT::~scidBaseT() {
 
 	delete[] duplicates_;
 	delete idx;
-	delete nb;
+	delete nb_;
 	delete game;
 	delete bbuf;
 	delete stats_;
@@ -88,37 +83,32 @@ scidBaseT::~scidBaseT() {
 
 errorT scidBaseT::Open(ICodecDatabase::Codec dbtype, fileModeT fMode,
                        const char* filename, const Progress& progress) {
-	if (inUse) return ERROR_FileInUse;
-	if (filename == 0) filename = "";
+	if (inUse)
+		return ERROR_FileInUse;
+	if (filename == 0)
+		filename = "";
 
-	inUse = true;
+	auto obj = ICodecDatabase::open(dbtype, fMode, filename, progress, idx, nb_);
+	if (obj.first) {
+		codec_.reset(obj.first);
+		inUse = true;
+		fileMode_ = (fMode == FMODE_Create) ? FMODE_Both : fMode;
+		fileName_ = filename;
+		gameNumber = -1;
 
-	delete codec_;
-	errorT err = OK;
-	codec_ = ICodecDatabase::make(dbtype, &err, fMode, filename, progress, idx, nb);
-	if (codec_ == 0) {
+		// Initialize the filters: all the games are included by default.
+		dbFilter->Init(numGames());
+		treeFilter->Init(numGames());
+		ASSERT(filters_.empty());
+
+		// Default treeCache size: 250
+		treeCache.CacheResize(250);
+	} else {
 		idx->Close();
-		nb->Clear();
-		inUse = false;
-		return err;
+		nb_->Clear();
 	}
 
-	if (fMode == FMODE_Create) fMode = FMODE_Both;
-	fileMode_ = fMode;
-	fileName_ = filename;
-	gameNumber = -1;
-
-	// Initialize the filters: all the games are included by default.
-	dbFilter->Init(numGames());
-	treeFilter->Init(numGames());
-	ASSERT(filters_.empty());
-
-	// Ensure an old treefile is not still around:
-	std::remove((fileName_ + ".stc").c_str());
-	// Default treeCache size: 250
-	treeCache.CacheResize(250);
-
-	return err;
+	return obj.second;
 }
 
 errorT scidBaseT::Close () {
@@ -131,10 +121,9 @@ errorT scidBaseT::Close () {
 
 	errorT errGFile = codec_->flush();
 	errorT errIdx = idx->Close();
-	nb->Clear();
-	delete codec_;
+	nb_->Clear();
+	codec_ = nullptr;
 
-	codec_ = NULL;
 	clear();
 	game->Clear();
 	fileMode_ = FMODE_None;
@@ -170,8 +159,17 @@ errorT scidBaseT::endTransaction(gamenumT gNum) {
 	clear();
 	errorT res = codec_->flush();
 
-	for (size_t i = 0, n = sortCaches_.size(); i < n; ++i) {
-		sortCaches_[i].second->checkForChanges(gNum);
+	auto n_games = numGames();
+	if (dbFilter->Size() != n_games) {
+		dbFilter->Resize(n_games);
+		treeFilter->Resize(n_games);
+		for (auto& filter : filters_) {
+			filter.second->Resize(n_games);
+		}
+	}
+
+	for (auto& sortCache : sortCaches_) {
+		sortCache.second->checkForChanges(gNum);
 	}
 
 	return res;
@@ -213,40 +211,8 @@ errorT scidBaseT::setExtraInfo(const std::string& tagname, const char* new_value
 }
 
 /**
-* scidBaseT::makeGamePos() - constructs a GamePos object
-* @game: a Game object with a valid current position
-* @ravNum: current variation number
-*
-* This function extracts informations from the current position of Game @game
-* and create a GamePos object with the corresponding informations:
-* RAVdepth: current variation depth.
-* RAVnum: current variation num.
-* FEN: "Forsyth-Edwards Notation" describing the current position.
-* NAGS: "Numeric Annotation Glyph" is a non-negative integer from 0 to 255
-*       used to indicate a simple annotation in a language independent manner.
-* comment: text annotation of the current position.
-* lastMoveSAN: the last move that was played to reach the current position.
-*              The move is indicated using English "Standard Algebraic Notation".
-*/
-scidBaseT::GamePos scidBaseT::makeGamePos(Game& game, unsigned int ravNum) {
-	GamePos res;
-	res.RAVdepth = game.GetVarLevel();
-	res.RAVnum = ravNum;
-	char strBuf[256];
-	game.GetCurrentPos()->PrintFEN(strBuf, FEN_ALL_FIELDS);
-	res.FEN = strBuf;
-	for (byte* nag = game.GetNags(); *nag; nag++) {
-		res.NAGs.push_back(*nag);
-	}
-	res.comment = game.GetMoveComment();
-	game.GetPrevSAN(strBuf);
-	res.lastMoveSAN = strBuf;
-	return res;
-}
-
-/**
 * scidBaseT::getGame() - returns all the positions of a game
-* @ie: a valid pointer to the IndexEntry of the desired game
+* @ie: reference to the IndexEntry of the desired game
 * @dest: a container of GamePos objects where the positions will be stored.
 *
 * This function iterate all the positions of the game pointed by @ie and
@@ -267,64 +233,36 @@ scidBaseT::GamePos scidBaseT::makeGamePos(Game& game, unsigned int ravNum) {
 *
 * Return OK if successful.
 */
-errorT scidBaseT::getGame(const IndexEntry* ie, std::vector<GamePos>& dest) {
-	ASSERT(ie != 0);
-
-	// Create the Game object
+errorT scidBaseT::getGame(const IndexEntry& ie, std::vector<GamePos>& dest) {
 	ByteBuffer buf(BBUF_SIZE);
-	if (getGame(ie, &buf) != OK) {
+	if (getGame(&ie, &buf) != OK) {
 		return ERROR_Decode;
 	}
 	Game game;
 	if (game.Decode(&buf, GAME_DECODE_ALL) != OK) {
 		return ERROR_Decode;
 	}
-	std::vector<int> endPos = game.GetCurrentLocation();
-	game.MoveToPly(0);
+	game.MoveToStart();
+	do {
+		if (game.AtVarStart() && !game.AtStart())
+			continue;
 
-	// Add start FEN
-	dest.push_back(makeGamePos(game, 0));
-
-	// Iterate all the positions of the game
-	std::vector< std::pair<uint, uint> > rav;
-	rav.push_back(std::make_pair(0, 0));
-	errorT err = OK;
-	while (err == OK) {
-		uint nVariations = game.GetNumVariations();
-		err = game.MoveForward();
-		if (err == OK) {
-			dest.push_back(makeGamePos(game, rav.back().first));
+		dest.emplace_back();
+		auto& gamepos = dest.back();
+		gamepos.RAVdepth = game.GetVarLevel();
+		gamepos.RAVnum = game.GetVarNumber();
+		char strBuf[256];
+		game.currentPos()->PrintFEN(strBuf, FEN_ALL_FIELDS);
+		gamepos.FEN = strBuf;
+		for (byte* nag = game.GetNags(); *nag; nag++) {
+			gamepos.NAGs.push_back(*nag);
 		}
+		gamepos.comment = game.GetMoveComment();
+		game.GetPrevSAN(strBuf);
+		gamepos.lastMoveSAN = strBuf;
 
-		if (nVariations != 0) {
-			if (err == OK) {
-				// Go back in order to process variations
-				err = game.MoveBackup();
-				if (err != OK) break;
-			}
-			// Enter the first variation
-			err = game.MoveIntoVariation(0);
-			rav.push_back(std::make_pair(0, nVariations));
-		} else {
-			if (err == ERROR_EndOfMoveList) {
-				// Leave the current variation
-				err = game.MoveExitVariation();
-				if (err != OK) break;
-
-				if (++rav.back().first < rav.back().second) {
-					// Enter the next variation
-					err = game.MoveIntoVariation(rav.back().first);
-				} else {
-					// All the sub-variation has been processed
-					rav.pop_back();
-					// Skip the main move of the parent variation
-					err = game.MoveForward();
-				}
-			}
-		}
-	}
-	if (rav.size() == 1 && game.GetCurrentLocation() == endPos) return OK;
-	return err;
+	} while (game.MoveForwardInPGN() == OK);
+	return OK;
 }
 
 errorT scidBaseT::saveGame(Game* game, gamenumT replacedGameId) {
@@ -341,10 +279,7 @@ errorT scidBaseT::saveGameHelper(Game* game, gamenumT gameId) {
 	if (gameId < numGames())
 		return codec_->saveGame(game, gameId);
 
-	errorT err = codec_->addGame(game);
-	if (err == OK)
-		extendFilters();
-	return err;
+	return codec_->addGame(game);
 }
 
 errorT scidBaseT::importGame(const scidBaseT* srcBase, uint gNum) {
@@ -380,32 +315,36 @@ errorT scidBaseT::importGames(const scidBaseT* srcBase, const HFilter& filter, c
 	return (err == OK) ? errClear : err;
 }
 
-errorT scidBaseT::importGameHelper(const scidBaseT* sourceBase, uint gNum) {
-	const IndexEntry* srcIe = sourceBase->getIndexEntry(gNum);
-	uint gameDataLen = srcIe->GetLength();
-	const byte* gameData =
-	    sourceBase->codec_->getGameData(srcIe->GetOffset(), gameDataLen);
-	if (gameData == 0) return ERROR_FileRead;
+errorT scidBaseT::importGameHelper(const scidBaseT* srcBase, gamenumT gNum) {
+	auto srcIe = srcBase->getIndexEntry(gNum);
+	auto dataSz = srcIe->GetLength();
+	auto data = srcBase->codec_->getGameData(srcIe->GetOffset(), dataSz);
+	if (data == nullptr)
+		return ERROR_FileRead;
 
-	IndexEntry ie = *srcIe;
-	errorT err;
-	err = ie.SetWhiteName(nb, srcIe->GetWhiteName(sourceBase->nb));
-	if (err != OK) return err;
-	err = ie.SetBlackName(nb, srcIe->GetBlackName(sourceBase->nb));
-	if (err != OK) return err;
-	err = ie.SetEventName(nb, srcIe->GetEventName(sourceBase->nb));
-	if (err != OK) return err;
-	err = ie.SetSiteName(nb, srcIe->GetSiteName(sourceBase->nb));
-	if (err != OK) return err;
-	err = ie.SetRoundName(nb, srcIe->GetRoundName(sourceBase->nb));
-	if (err != OK) return err;
+	return codec_->addGame(srcIe, srcBase->getNameBase(), data, dataSz);
+}
 
-	nb->AddElo(ie.GetWhite(), ie.GetWhiteElo());
-	nb->AddElo(ie.GetBlack(), ie.GetBlackElo());
+errorT scidBaseT::importGames(ICodecDatabase::Codec dbtype,
+                              const char* filename, const Progress& progress,
+                              std::string& errorMsg) {
+	ASSERT(dbtype == ICodecDatabase::PGN);
 
-	err = codec_->addGame(&ie, gameData, gameDataLen);
-	if (err == OK) extendFilters();
-	return err;
+	if (isReadOnly())
+		return ERROR_FileReadOnly;
+
+	beginTransaction();
+
+	CodecPgn pgn;
+	auto res = pgn.open(filename, FMODE_ReadOnly);
+	if (res == OK) {
+		res = CodecPgn::parseGames(
+		    progress, pgn, [&](Game& game) { return codec_->addGame(&game); });
+		errorMsg = pgn.parseErrors();
+	}
+
+	auto res_endTrans = endTransaction();
+	return (res != OK) ? res : res_endTrans;
 }
 
 /**
@@ -452,15 +391,6 @@ void scidBaseT::deleteFilter(const char* filterId) {
 			filters_.erase(filters_.begin() + i);
 			break;
 		}
-	}
-}
-
-void scidBaseT::extendFilters() {
-	dbFilter->Append(dbFilter->isWhole() ? 1 : 0);
-	treeFilter->Append(treeFilter->isWhole() ? 1 : 0);
-	for (size_t i = 0, n = filters_.size(); i < n; i++) {
-		Filter* filter = filters_[i].second;
-		filter->Append(filter->isWhole() ? 1 : 0);
 	}
 }
 
@@ -621,6 +551,7 @@ std::vector<scidBaseT::TreeStat> scidBaseT::getTreeStat(const HFilter& filter) {
 
 	std::vector<scidBaseT::TreeStat> res;
 	std::vector<FullMove> v;
+	auto nb = getNameBase();
 	for (gamenumT gnum = 0, n = numGames(); gnum < n; gnum++) {
 		uint ply = filter.get(gnum);
 		if (ply == 0) continue;
@@ -655,17 +586,17 @@ errorT scidBaseT::getCompactStat(uint* n_deleted,
                                  uint* n_badNameId) {
 	std::vector<uint> nbFreq[NUM_NAME_TYPES];
 	for (nameT n = NAME_PLAYER; n < NUM_NAME_TYPES; n++) {
-		nbFreq[n].resize(nb->GetNumNames(n), 0);
+		nbFreq[n].resize(getNameBase()->GetNumNames(n), 0);
 	}
 
-	uint last_offset = 0;
+	uint64_t last_offset = 0;
 	*n_sparse = 0;
 	*n_deleted = 0;
 	for (gamenumT i=0, n = numGames(); i < n; i++) {
 		const IndexEntry* ie = getIndexEntry (i);
 		if (ie->GetDeleteFlag()) { *n_deleted += 1; continue; }
 
-		uint offset = ie->GetOffset();
+		auto offset = ie->GetOffset();
 		if (offset < last_offset) *n_sparse += 1;
 		last_offset = offset;
 
@@ -801,7 +732,7 @@ errorT scidBaseT::compact(const Progress& progress) {
 		}
 		for (size_t i = 0, n = oldSC.size(); i < n; i++) {
 			const std::string& criteria = oldSC[i].first;
-			SortCache* sc = SortCache::create(idx, nb, criteria.c_str());
+			SortCache* sc = SortCache::create(idx, nb_, criteria.c_str());
 			if (sc != NULL) {
 				sc->incrRef(oldSC[i].second);
 				sortCaches_.push_back(std::make_pair(criteria, sc));
@@ -831,7 +762,7 @@ SortCache* scidBaseT::getSortCache(const char* criteria) {
 			return sortCaches_[i].second;
 	}
 
-	SortCache* sc = SortCache::create(idx, nb, criteria);
+	SortCache* sc = SortCache::create(idx, getNameBase(), criteria);
 	if (sc != NULL)
 		sortCaches_.push_back(std::pair<std::string, SortCache*>(criteria, sc));
 

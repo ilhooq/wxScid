@@ -53,8 +53,10 @@ const errorT
     ERROR_NoMatchFound   = 205,
     ERROR_NameDataLoss   = 206,
     ERROR_NameTooLong    = 207,
-
-    ERROR_IndexFull      = 251,
+    ERROR_NameLimit      = 208,
+    ERROR_OffsetLimit    = 209,
+    ERROR_GameLengthLimit= 210,
+    ERROR_NumGamesLimit  = 211,
 
     // Position errors
     ERROR_InvalidFEN     = 301,
@@ -70,9 +72,7 @@ const errorT
     ERROR_VariationLimit = 405,
     ERROR_Decode = 406,
     ERROR_GameFull = 407,
-
-    // Scan Errors
-    ERROR_PGNTag = 501,
+    ERROR_CastlingAvailability = 408,
 
     // Buffer errors
     ERROR_BufferFull = 601,

@@ -18,7 +18,6 @@
 
 #include "common.h"
 #include "movelist.h"
-#include "tokens.h"
 #include <stdio.h>
 
 class DString;
@@ -103,8 +102,6 @@ private:
                                     // or pawn move.
     ushort          PlyCounter;
     byte            Castling;       // castling flags
-    bool            StrictCastling; // If false, allow castling after moving
-                                        // the King or Rook.
 
     uint            Hash;           // Hash value.
     uint            PawnHash;       // Pawn structure hash value.
@@ -133,7 +130,17 @@ private:
     bool  IsValidEnPassant (squareT from, squareT to);
     void  GenPawnMoves (MoveList * mlist, squareT from, directionT dir,
                         SquareSet * sqset, genMovesT genType);
-    errorT      AssertPos ();   //  Checks for errors in board etc.
+
+    void GenCheckEvasions(MoveList* mlist, pieceT mask, genMovesT genType,
+                          SquareList* checkSquares);
+    errorT MatchPawnMove(MoveList* mlist, fyleT fromFyle, squareT to,
+                         pieceT promote);
+
+    errorT ReadMove(simpleMoveT* sm, const char* str, int slen, pieceT p);
+    errorT ReadMoveCastle(simpleMoveT* sm, const char* str, int slen);
+    errorT ReadMovePawn(simpleMoveT* sm, const char* str, int slen, fyleT from);
+    errorT ReadMoveKing(simpleMoveT* sm, const char* str, int slen);
+
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //  Position:  Public Functions
@@ -150,15 +157,16 @@ public:
     byte        PieceCount (pieceT p)    { return Material[p]; }
     byte *      GetMaterial ()           { return Material; }
     void        SetEPTarget (squareT s)  { EPTarget = s; }
-    squareT     GetEPTarget ()           { return EPTarget; }
+    squareT     GetEPTarget () const     { return EPTarget; }
     void        SetToMove (colorT c)     { ToMove = c; }
-    colorT      GetToMove ()             { return ToMove; }
+    colorT      GetToMove () const       { return ToMove; }
     void        SetPlyCounter (ushort x) { PlyCounter = x; }
-    ushort      GetPlyCounter ()         { return PlyCounter; }
-    ushort      GetFullMoveCount ()      { return PlyCounter / 2 + 1; }
+    ushort      GetPlyCounter () const   { return PlyCounter; }
+    ushort      GetFullMoveCount() const { return PlyCounter / 2 + 1; }
 
     // Methods to get the Board or piece lists -- used in game.cpp to
     // decode moves:
+    const squareT* GetList(colorT c) const { return List[c]; }
     squareT *   GetList (colorT c)    { return List[c]; }
     uint        GetCount (colorT c)   { return Count[c]; }
     uint        TotalMaterial ()      { return Count[WHITE] + Count[BLACK]; }
@@ -198,13 +206,16 @@ public:
 
     // Castling flags
     inline void SetCastling (colorT c, castleDirT dir, bool flag);
-    bool        GetCastling (colorT c, castleDirT dir);
+    bool GetCastling(colorT c, castleDirT dir) const {
+        int b = (c == WHITE) ? 1 : 4;
+        if (dir == KSIDE)
+            b += b;
+        // Now b == 1 or 2 (white flags), or 4 or 8 (black flags)
+        return Castling & b;
+    }
     inline bool CastlingPossible () { return (Castling ? true : false); }
     byte        GetCastlingFlags () { return Castling; }
     void        SetCastlingFlags (byte b) { Castling = b; }
-
-    void        SetStrictCastling (bool b) { StrictCastling = b; }
-    bool        GetStrictCastling (void) { return StrictCastling; }
 
     // Hashing
     inline uint HashValue (void) { return Hash; }
@@ -222,11 +233,6 @@ public:
     void  GenerateMoves (MoveList * mlist, genMovesT genType) { GenerateMoves (mlist, EMPTY, genType, true); }
     void  GenerateCaptures (MoveList * mlist) { GenerateMoves (mlist, EMPTY, GEN_CAPTURES, true); }
     bool  IsLegalMove (simpleMoveT * sm);
-
-    void        GenCheckEvasions (MoveList * mlist, pieceT mask, genMovesT genType, SquareList * checkSquares);
-    void        MatchLegalMove (MoveList * mlist, pieceT mask, squareT target);
-    errorT      MatchPawnMove (MoveList * mlist, fyleT fromFyle, squareT to, pieceT promote);
-    errorT      MatchKingMove (MoveList * mlist, squareT target);
 
     uint        CalcAttacks (colorT toMove, squareT kingSq, SquareList * squares);
     int         TreeCalcAttacks (colorT toMove, squareT target);
@@ -258,15 +264,12 @@ public:
     void        MakeUCIString (simpleMoveT * sm, char * s);
 	void        CalcSANStrings (sanListT *sanList, sanFlagT flag);
 
-    errorT      ReadCoordMove (simpleMoveT * m, const char * s, bool reverse);
-    errorT      ReadMove (simpleMoveT * m, const char * s, tokenT t);
-    errorT      ParseMove (simpleMoveT * sm, const char * s);
-    errorT      ReadLine (const char * s);
+    errorT      ReadCoordMove(simpleMoveT* m, const char* s, int slen, bool reverse);
+    errorT      ParseMove(simpleMoveT* sm, const char* str);
+    errorT      ParseMove(simpleMoveT* sm, const char* begin, const char* end);
 
     // Board I/O
     void        MakeLongStr (char * str);
-    void        DumpBoard (FILE * fp);
-    void        DumpLists (FILE * fp);
     errorT      ReadFromLongStr (const char * str);
     errorT      ReadFromCompactStr (const byte * str);
     errorT      ReadFromFEN (const char * s);
@@ -275,7 +278,7 @@ public:
     byte        CompactStrFirstByte () {
         return (Board[0] << 4) | Board[1];
     }
-    void        PrintFEN (char * str, uint flags);
+    void        PrintFEN(char* str, uint flags) const;
     void        DumpLatexBoard (DString * dstr, bool flip);
     void        DumpLatexBoard (DString * dstr) {
         DumpLatexBoard (dstr, false);
@@ -312,19 +315,6 @@ Position::SetCastling (colorT c, castleDirT dir, bool flag)
     // Now b = 1 or 2 (white flags), or 4 or 8 (black flags)
     if (flag) { Castling |= b; } else { Castling &= (255-b); }
     return;
-}
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Position::GetCastling():
-//      Get a castling flag.
-//
-inline bool
-Position::GetCastling (colorT c, castleDirT dir)
-{
-    byte b = (c==WHITE ? 1 : 4);
-    if (dir == KSIDE) b += b;
-    // Now b == 1 or 2 (white flags), or 4 or 8 (black flags)
-    if (Castling & b) { return true; } else { return false; }
 }
 
 #endif  // SCID_POSITION_H

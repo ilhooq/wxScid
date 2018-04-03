@@ -48,19 +48,19 @@ public:
 	/**
 	 * Creates a new object and calls the virtual function dyn_open().
 	 * @param codec:    the type of the object to be created.
-	 * @param err[out]: OK on success, an error code on failure.
 	 * @param fMode:    a valid file mode.
 	 * @param filename: the full path of the database to be opened.
 	 * @param progress: a Progress object used for GUI communications.
 	 * @param idx:      valid pointer to the Index object for this database.
 	 * @param nb:       valid pointer to the NameBase object for this database.
 	 * @returns
-	 * - on success: a valid pointer to the new object and set @p err to OK.
-	 * - on error:   0 (nullptr) and sets @p err to the error code.
+	 * - on success: a valid pointer to the new object and OK.
+	 * - on error:   nullptr and the error code.
 	 */
-	static ICodecDatabase* make(Codec codec, errorT* err, fileModeT fMode,
-	                            const char* filename, const Progress& progress,
-	                            Index* idx, NameBase* nb);
+	static std::pair<ICodecDatabase*, errorT> open(Codec codec, fileModeT fMode,
+	                                               const char* filename,
+	                                               const Progress& progress,
+	                                               Index* idx, NameBase* nb);
 
 	/**
 	 * Returns the Codec type.
@@ -83,18 +83,19 @@ public:
 	 * - a pointer to the game data.
 	 * - 0 (nullptr) on error.
 	 */
-	virtual const byte* getGameData(uint32_t offset, uint32_t length) = 0;
+	virtual const byte* getGameData(uint64_t offset, uint32_t length) = 0;
 
 	/**
 	 * Add a game to the database.
-	 * @param srcIe:  valid pointer to the header data.
-	 * @param src:    valid pointer to a buffer containing the game data
-	 *                (encoded in native format).
-	 * @param length: length of the game data (in bytes).
+	 * @param srcIe:   valid pointer to the header data.
+	 * @param srcNb:   valid pointer to the NameBase containing srcIe's names.
+	 * @param srcData: valid pointer to a buffer containing the game data
+	 *                 (encoded in native format).
+	 * @param dataLen: length of the game data (in bytes).
 	 * @returns OK if successful or an error code.
 	 */
-	virtual errorT addGame(IndexEntry* srcIe, const byte* src,
-	                       size_t length) = 0;
+	virtual errorT addGame(const IndexEntry* srcIe, const NameBase* srcNb,
+	                       const byte* srcData, size_t dataLen) = 0;
 
 	/**
 	 * Add a game to the database.
@@ -105,22 +106,30 @@ public:
 
 	/**
 	 * Replaces a game in the database.
-	 * @param srcIe:    valid pointer to the new header data.
-	 * @param src:      valid pointer to a buffer containing the new game data
-	 *                  (encoded in native format).
-	 * @param length:   length of the new game data (in bytes).
-	 * @param replaced: valid gamenumT of the game to be replaced.
-	 * @returns OK if successful or an error code.
-	 */
-	virtual errorT saveGame(IndexEntry* srcIe, const byte* src, size_t length,
-	                        gamenumT replaced) = 0;
-	/**
-	 * Replaces a game in the database.
 	 * @param game:     valid pointer to a Game object with the new data.
 	 * @param replaced: valid gamenumT of the game to be replaced
 	 * @returns OK if successful or an error code.
 	 */
 	virtual errorT saveGame(Game* game, gamenumT replaced) = 0;
+
+	/**
+	 * Replaces a game's IndexEntry (which contains the header data of a game).
+	 * @param ie:       reference to the IndexEntry with the new data.
+	 * @param replaced: valid gamenumT of the game to be replaced
+	 * @returns OK if successful or an error code.
+	 */
+	virtual errorT saveIndexEntry(const IndexEntry& ie, gamenumT replaced) = 0;
+
+	/**
+	 * Adds a name (player, event, site or round) to the database.
+	 * @param nt:   nameT type of the name to add.
+	 * @param name: the name to add.
+	 * @returns
+	 * - on success, a @e std::pair containing OK and the corresponding ID.
+	 * - on failure, a @e std::pair containing an error code and 0.
+	 */
+	virtual std::pair<errorT, idNumberT> addName(nameT nt,
+	                                             const char* name) = 0;
 
 	/**
 	 * Writes all pending output to the files.
