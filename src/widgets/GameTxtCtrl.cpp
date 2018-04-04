@@ -7,7 +7,8 @@
 #include "GameTxtCtrl.h"
 #include "events.h"
 
-BEGIN_EVENT_TABLE(GameTxtCtrl, wxRichTextCtrl) EVT_COMMAND (wxID_ANY, EVT_GAME_LOADED, GameTxtCtrl::OnGameLoaded)
+BEGIN_EVENT_TABLE(GameTxtCtrl, wxRichTextCtrl)
+EVT_COMMAND (wxID_ANY, EVT_GAME_LOADED, GameTxtCtrl::OnGameLoaded)
 EVT_KEY_DOWN(GameTxtCtrl::OnKeyDown)
 EVT_TEXT_URL(wxID_ANY, GameTxtCtrl::OnURL)
 // EVT_MOTION(GameTxtCtrl::OnMouseMove)
@@ -233,12 +234,14 @@ void GameTxtCtrl::WriteGame()
 
 void GameTxtCtrl::highLightMove(int move, bool activate)
 {
-    wxRichTextAttr style;
-    wxRichTextRange range = movesRange->at(move);
-    GetStyleForRange(range, style);
-    wxColour colour = (activate)? wxColor(220, 230, 230, wxALPHA_OPAQUE) : wxColor(255, 255, 255, wxALPHA_OPAQUE);
-    style.SetBackgroundColour(colour);
-    SetStyle(range, style);
+    if (movesRange->size() >= move) {
+        wxRichTextAttr style;
+        wxRichTextRange range = movesRange->at(move);
+        GetStyleForRange(range, style);
+        wxColour colour = (activate)? wxColor(220, 230, 230, wxALPHA_OPAQUE) : wxColor(255, 255, 255, wxALPHA_OPAQUE);
+        style.SetBackgroundColour(colour);
+        SetStyle(range, style);
+    }
 }
 
 void GameTxtCtrl::PlayMove(int move)
