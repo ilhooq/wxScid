@@ -8,6 +8,7 @@ lib_LTLIBRARIES = libscid.la
 
 # Sources for libscid
 libscid_la_SOURCES = \
+	scid.cpp \
 	scidbase.cpp \
 	bytebuf.cpp \
 	dbasepool.cpp \

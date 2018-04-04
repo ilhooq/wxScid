@@ -13,7 +13,7 @@ wxscid_SOURCES= \
 	widgets/GamesListCtrl.cpp \
 	widgets/GameTxtCtrl.cpp
 
-wxscid_CXXFLAGS  = $(AM_CXXFLAGS) @WX_CXXFLAGS@ -std=c++14
+wxscid_CXXFLAGS  = $(AM_CXXFLAGS) @WX_CXXFLAGS@ -std=c++11
 wxscid_LDADD   = $(AM_LIBS) @WX_LIBS@ scid/libscid.la
 wxscid_LDFLAGS = $(AM_LDFLAGS)
 

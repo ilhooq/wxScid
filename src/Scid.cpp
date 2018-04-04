@@ -3,84 +3,55 @@
  *
  */
 #include <vector>
+#include <map>
 #include <wx/filename.h>
 
-#include "scid/scidbase.h"
-#include "scid/dbasepool.h"
+#include "scid/scid.h"
 
 #include "database.h"
 #include "Scid.h"
+
 #include "events.h"
+#include "widgets/GamesListCtrl.h"
+
+static std::map<unsigned int, scid::game_entry> entriesMap;
+
+bool static mapEntryExists(long item)
+{
+    std::map<unsigned int, scid::game_entry>::iterator it = entriesMap.find(item);
+    return (it != entriesMap.end());
+}
+
 
 BEGIN_EVENT_TABLE(Scid, wxEvtHandler) EVT_COMMAND (wxID_ANY, EVT_OPEN_DATABASE_REQUEST, Scid::openDatabase)
-EVT_COMMAND (wxID_ANY, EVT_LISTGAMES_REQUEST, Scid::OnListGames)
-EVT_COMMAND (wxID_ANY, EVT_LOAD_GAME_REQUEST, Scid::LoadGame)
+EVT_LIST_CACHE_HINT(wxID_ANY, Scid::OnGamesListCacheHint)
+EVT_LIST_ITEM_ACTIVATED (wxID_ANY, Scid::OnListItemActivated)
+EVT_COMMAND (wxID_ANY, EVT_DISPLAY_LIST_CELL, Scid::OnListDisplayCell)
 END_EVENT_TABLE()
 
 Scid::Scid()
 {
-    DBasePool::init();
+    scid::init();
     currentDbHandle = 0;
     gameLoaded = new wxVector<GamePos>;
 }
 
 Scid::~Scid()
 {
-    DBasePool::closeAll();
+    scid::close();
 }
 
 void Scid::openDatabase(wxCommandEvent& evt)
 {
     wxString path = evt.GetString();
-    std::string filename = (std::string) path.c_str();
-
-    ICodecDatabase::Codec codec = ICodecDatabase::Codec::MEMORY;
-    fileModeT fMode = FMODE_Both;
-
-    std::string extension = filename.substr(filename.find_last_of(".") + 1);
-
-    if (extension == "si4") {
-        codec = ICodecDatabase::Codec::SCID4;
-        // Remove the extension because scid database contains 3 files (*.si4, *.sg4, *.sn4)
-        filename = filename.substr(0, filename.find_last_of("."));
-    } else if (extension == "pgn") {
-        codec = ICodecDatabase::Codec::PGN;
-    } else {
-        throw ScidError("Unrecognized file format.", ERROR_CodecUnsupFeat);
-    }
-
-    if (DBasePool::find(filename.c_str()) != 0) {
-        throw ScidError("File already in use.", ERROR_FileInUse);
-    }
-
-    scidBaseT* dbase = DBasePool::getFreeSlot();
-
-    if (dbase == 0) {
-        throw ScidError("The database opening limit is reached", ERROR_Full);
-    }
-
-    Progress progress;
-
-    errorT err = dbase->Open(codec, fMode, filename.c_str(), progress);
-
-    if (err != OK && err != ERROR_NameDataLoss && fMode == FMODE_Both) {
-        err = dbase->Open(ICodecDatabase::Codec::SCID4, FMODE_ReadOnly, filename.c_str(), progress);
-    }
-
-    progress.report(1, 1);
-
-    if (err != OK && err != ERROR_NameDataLoss) {
-        throw ScidError("Unable to open database", err);
-    }
-
-    currentDbHandle = DBasePool::switchCurrent(dbase);
+    currentDbHandle = scid::base_open((std::string) path.c_str());
 
     DbInfos infos;
     infos.handle = currentDbHandle;
-    infos.numGames = dbase->numGames();
+    infos.numGames = scid::base_numgames(currentDbHandle);
     infos.path = path;
 
-    wxFileName fname((wxString) dbase->getFileName());
+    wxFileName fname((wxString) scid::base_filename(currentDbHandle));
     infos.name = fname.GetName();
 
     wxCommandEvent event(EVT_OPEN_DATABASE, wxID_ANY);
@@ -89,167 +60,96 @@ void Scid::openDatabase(wxCommandEvent& evt)
     ProcessEvent(event);
 }
 
-void Scid::OnListGames(wxCommandEvent& evt)
+
+// Called on double click or when pressed ENTER on a row
+void Scid::OnListItemActivated(wxListEvent &event)
 {
-    ListGamesRequest *data = (ListGamesRequest*) evt.GetClientData();
-    listGames(currentDbHandle, "d+", "dbfilter", data->HashEntries, data->fromItem, data->count);
+    wxASSERT(mapEntryExists(event.GetIndex()));
+    scid::game_entry entry = entriesMap[event.GetIndex()];
+    LoadGame(entry.index);
 }
 
-void Scid::listGames(int baseHandle, const char* ordering, const char* filterId, HashGameEntries* hashEntries, unsigned int start, unsigned int count)
+// This function is called during the window OnPaint event
+void Scid::OnGamesListCacheHint(wxListEvent& event)
 {
-    scidBaseT* dbase = DBasePool::getBase(baseHandle);
-
-    if (count == 0) {
-        // Get all games
-        count = dbase->numGames();
+    if (entriesMap.size() > 100000) {
+        entriesMap.clear();
     }
 
-    const HFilter filter = dbase->getFilter(filterId);
+    int count = event.GetCacheTo() - event.GetCacheFrom();
 
-    if (filter == NULL) {
-        throw ScidError("Filter bad arguments", ERROR_BadArg);
+    // Add padding to retrieve more items in the cache
+    count += 100;
+
+    if (mapEntryExists(event.GetCacheFrom()) && mapEntryExists(count)) {
+        // Items already exists
+        return;
     }
 
-    gamenumT* idxList = new gamenumT[count];
-
-    count = dbase->listGames(ordering, (size_t) start, (size_t) count, filter, idxList);
-
-    // The name base file in memory.
-    const NameBase* nb = dbase->getNameBase();
-
-    for (uint i = 0, item = start; i < count; ++i, item++) {
-
-        uint idx = idxList[i];
-        wxASSERT(filter->get(idx) != 0);
-        GameEntry entry;
-
-        uint ply = filter->get(idx) - 1;
-
-        const IndexEntry* ie = dbase->getIndexEntry(idx);
-
-        entry.result = RESULT_STR[ie->GetResult()];
-        entry.movesNumber = (ie->GetNumHalfMoves() + 1) / 2;
-        entry.whiteName = wxString::FromUTF8(ie->GetWhiteName(nb));
-        entry.blackName = wxString::FromUTF8(ie->GetBlackName(nb));
-
-        std::string eloStr;
-        eloT welo = ie->GetWhiteElo();
-
-        if (welo != 0) {
-            eloStr = to_string(welo);
-        } else {
-            welo = ie->GetWhiteElo(nb);
-            eloStr = to_string(welo);
-            if (welo != 0) {
-                eloStr.insert(eloStr.begin(), '(');
-                eloStr.insert(eloStr.end(), ')');
-            }
-        }
-
-        entry.whiteElo = (wxString) eloStr;
-
-        eloT belo = ie->GetBlackElo();
-
-        if (belo != 0) {
-            eloStr = to_string(belo);
-        } else {
-            belo = ie->GetBlackElo(nb);
-            eloStr = to_string(belo);
-            if (belo != 0) {
-                eloStr.insert(eloStr.begin(), '(');
-                eloStr.insert(eloStr.end(), ')');
-            }
-        }
-
-        entry.blackElo = (wxString) eloStr;
-
-        char date[16];
-        date_DecodeToString(ie->GetDate(), date);
-        entry.date = (wxString) date;
-
-        entry.eventName = (wxString) ie->GetEventName(nb);
-        entry.roundName = (wxString) ie->GetRoundName(nb);
-        entry.siteName = (wxString) ie->GetSiteName(nb);
-        entry.nagCount = ie->GetNagCount();
-        entry.commentCount = ie->GetCommentCount();
-        entry.variationCount = ie->GetVariationCount();
-        entry.deletedFlag = ie->GetDeleteFlag();
-
-        char flags[16];
-        ie->GetFlagStr(flags, "WBMENPTKQ!?U123456");
-        entry.flags = (wxString) flags;
-
-        char eco[6];
-        eco_ToExtendedString(ie->GetEcoCode(), eco);
-        entry.eco = (wxString) eco;
-
-        entry.endMaterial = (wxString) matsig_makeString(ie->GetFinalMatSig());
-        entry.startFlag = ie->GetStartFlag();
-
-        char event_date[16];
-        date_DecodeToString(ie->GetEventDate(), event_date);
-        entry.eventDate = (wxString) event_date;
-
-        entry.year = ie->GetYear();
-        entry.rating = ie->GetRating(nb);
-        FastGame game = dbase->getGame(ie);
-        entry.firstMoves = (wxString) game.getMoveSAN(ply, 10);
-        entry.index = idx;
-        entry.ply = ply;
-
-        (*hashEntries)[item] = entry;
-    }
-
-    delete[] idxList;
-
+    scid::base_gameslist(currentDbHandle, "d+", "dbfilter", event.GetCacheFrom(), count, &entriesMap);
 }
 
-unsigned int Scid::numGames(int baseHandle)
+void Scid::OnListDisplayCell(wxCommandEvent& evt)
 {
-    scidBaseT* dbase = DBasePool::getBase(baseHandle);
-    return dbase->numGames();
+    GameListCellData *data = (GameListCellData*) evt.GetClientData();
+
+    std::map<unsigned int, scid::game_entry>::iterator it = entriesMap.find(data->item);
+
+    if (it == entriesMap.end()) {
+        // Entry not found
+        data->text = "Error";
+    }
+
+    scid::game_entry entry = it->second;
+
+    switch (data->column) {
+        case GamesListCtrl::COL_DATE:
+            data->text = (wxString) entry.date;
+            break;
+        case GamesListCtrl::COL_RESULT:
+            data->text = (wxString) entry.result;
+            break;
+        case GamesListCtrl::COL_WHITENAME:
+            data->text = wxString::FromUTF8(entry.whiteName.c_str());
+            break;
+        case GamesListCtrl::COL_WHITEELO:
+            data->text = (wxString) entry.whiteElo;
+            break;
+        case GamesListCtrl::COL_BLACKNAME:
+            data->text = wxString::FromUTF8(entry.blackName.c_str());
+            break;
+        case GamesListCtrl::COL_BLACKELO:
+            data->text = (wxString) entry.blackElo;
+            break;
+        case GamesListCtrl::COL_FIRSTMOVES:
+            data->text = (wxString) entry.firstMoves;;
+            break;
+    }
 }
 
-void Scid::LoadGame(wxCommandEvent& evt)
+void Scid::LoadGame(unsigned int entryIndex)
 {
-    scidBaseT* dbase = DBasePool::getBase(currentDbHandle);
+    std::vector<scid::game_posInfos> dest;
+    scid::base_getGame(currentDbHandle, entryIndex, dest);
 
-    GameEntry *entry = (GameEntry*) evt.GetClientData();
-
-    const IndexEntry* ie = dbase->getIndexEntry(entry->index);
-
-    // The name base file in memory.
-    const NameBase* nb = dbase->getNameBase();
-    // wxPrintf(wxT("Enrtry requested: %d - Entry opened: %d - White : %s \n"), entry->index, ie->GetOffset(), wxString::FromUTF8(ie->GetWhiteName(nb)));
-
-    std::vector<scidBaseT::GamePos> dest;
-    dbase->getGame(*ie, dest);
-
-    std::vector<scidBaseT::GamePos>::iterator it;
-
-    //wxVector<GamePos> *result = new wxVector<GamePos>;
     if (!gameLoaded->empty())
+    {
         gameLoaded->clear();
+    }
+
+    std::vector<scid::game_posInfos>::iterator it;
 
     for (it = dest.begin(); it != dest.end(); it++) {
-        scidBaseT::GamePos ScidPos = *it;
+        scid::game_posInfos ScidPos = *it;
         GamePos pos;
         pos.RAVdepth = ScidPos.RAVdepth;
         pos.RAVnum = ScidPos.RAVnum;
+        pos.NAGs = ScidPos.NAGs;
         pos.FEN = ScidPos.FEN;
         pos.comment = wxString::FromUTF8(ScidPos.comment.c_str());
         pos.comment.Replace(wxT("\n"), wxT(" "));
         pos.comment.Replace(wxT("\r"), wxT(""));
-
         pos.lastMoveSAN = ScidPos.lastMoveSAN;
-
-        for (size_t iNag = 0, nNag = ScidPos.NAGs.size(); iNag < nNag; iNag++) {
-            char temp[20];
-            game_printNag(ScidPos.NAGs[iNag], temp, true, PGN_FORMAT_Plain);
-            if (!pos.NAGs.empty())
-                pos.NAGs << " ";
-            pos.NAGs << temp;
-        }
 
         gameLoaded->push_back(pos);
     }
@@ -258,5 +158,4 @@ void Scid::LoadGame(wxCommandEvent& evt)
     event.SetEventObject(this);
     event.SetClientData(gameLoaded);
     ProcessEvent(event);
-
 }

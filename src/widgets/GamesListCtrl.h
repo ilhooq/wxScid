@@ -7,12 +7,33 @@
 #ifndef WIDGETS_GAMESLISTVIEW_H_
 #define WIDGETS_GAMESLISTVIEW_H_
 
+#include <wx/event.h>
 #include <wx/listctrl.h>
-#include "database.h"
+
+wxDECLARE_EVENT(EVT_DISPLAY_LIST_CELL, wxCommandEvent);
+
+struct GameListCellData
+{
+    long item;
+    int column;
+    wxString text;
+};
 
 class GamesListCtrl: public wxListCtrl
 {
 public:
+    enum
+    {
+        COL_DATE,
+        COL_RESULT,
+        COL_WHITENAME,
+        COL_WHITEELO,
+        COL_BLACKNAME,
+        COL_BLACKELO,
+        COL_FIRSTMOVES,
+        COL_UNKNOWN,
+    };
+
     GamesListCtrl(wxWindow *parent,
                   const wxWindowID id,
                   const wxPoint& pos = wxDefaultPosition,
@@ -20,12 +41,7 @@ public:
                   long style = wxLC_REPORT | wxLC_VIRTUAL);
 
 private:
-    HashGameEntries hashEntries;
-    void OnCacheHint(wxListEvent &event);
-    void OnActivated(wxListEvent &event);
-    void OnOpenDatabase(wxCommandEvent& evt);
-    bool CacheEntryExists(const long item) const;
-    virtual wxString OnGetItemText(long item, long column) const;wxDECLARE_EVENT_TABLE();
+    virtual wxString OnGetItemText(long item, long column) const;
 };
 
 #endif /* WIDGETS_GAMESLISTVIEW_H_ */
