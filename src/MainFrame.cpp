@@ -234,8 +234,8 @@ void MainFrame::OnOpenDatabase(wxCommandEvent& evt)
     DbInfos *infos = (DbInfos*) evt.GetClientData();
     // Set the Title to reflect the file open
     SetTitle(wxString::Format(wxT("WxScid - %s (%d games)"), infos->name, infos->numGames));
-    wxWindow * listCtrl = (wxWindow *) wxWindow::FindWindowById(ID_GAMES_LIST_VIEW);
-    listCtrl->ProcessWindowEvent(evt);
+    GamesListCtrl * listCtrl = (GamesListCtrl *) wxWindow::FindWindowById(ID_GAMES_LIST_VIEW);
+    listCtrl->SetItemCount(infos->numGames);
 }
 
 void MainFrame::OnExit(wxCommandEvent &WXUNUSED(evt))
