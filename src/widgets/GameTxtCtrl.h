@@ -13,6 +13,13 @@
 class GameTxtCtrl: public wxRichTextCtrl
 {
 public:
+    enum STYLES {
+        BASE,
+        VARIANT,
+        COMMENT,
+        NAGS
+    };
+
     GameTxtCtrl(wxWindow* parent,
                 wxWindowID id = wxID_ANY,
                 const wxPoint& point = wxDefaultPosition,
@@ -27,6 +34,7 @@ public:
 private:
     wxVector<GamePos> *game;
     wxVector<wxRichTextRange> *movesRange;
+    wxRichTextAttr styles[4];
     int currentMove;
     void OnGameLoaded(wxCommandEvent& evt);
     void OnKeyDown(wxKeyEvent& evt);

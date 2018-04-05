@@ -21,6 +21,23 @@ currentMove(1)
     game = NULL;
     movesRange = new wxVector<wxRichTextRange>;
     // oldLinkHoverObject = NULL;
+
+    styles[BASE].SetFontUnderlined(false);
+    styles[BASE].SetFontWeight(wxFONTWEIGHT_BOLD);
+    styles[BASE].SetFontSize(11);
+    styles[BASE].SetTextColour(wxColour(0, 0, 0, wxALPHA_OPAQUE));
+
+    styles[VARIANT].SetFontUnderlined(false);
+    styles[VARIANT].SetFontWeight(wxFONTWEIGHT_NORMAL);
+    styles[VARIANT].SetTextColour(wxColour(39, 108, 151, wxALPHA_OPAQUE));
+
+    styles[COMMENT].SetFontUnderlined(false);
+    styles[COMMENT].SetFontWeight(wxFONTWEIGHT_NORMAL);
+    styles[COMMENT].SetTextColour(wxColour(39, 165, 60, wxALPHA_OPAQUE));
+
+    styles[NAGS].SetFontUnderlined(false);
+    styles[NAGS].SetFontWeight(wxFONTWEIGHT_NORMAL);
+    styles[NAGS].SetTextColour(wxColour(228, 0, 0, wxALPHA_OPAQUE));
 }
 
 void GameTxtCtrl::Next()
@@ -137,28 +154,7 @@ void GameTxtCtrl::WriteGame()
 
     BeginSuppressUndo();
 
-    wxRichTextAttr baseStyle;
-    baseStyle.SetFontUnderlined(false);
-    baseStyle.SetFontWeight(wxFONTWEIGHT_BOLD);
-    baseStyle.SetFontSize(11);
-    baseStyle.SetTextColour(wxColour(0, 0, 0, wxALPHA_OPAQUE));
-
-    wxRichTextAttr variantStyle;
-    variantStyle.SetFontUnderlined(false);
-    variantStyle.SetFontWeight(wxFONTWEIGHT_NORMAL);
-    variantStyle.SetTextColour(wxColour(39, 108, 151, wxALPHA_OPAQUE));
-
-    wxRichTextAttr commentStyle;
-    commentStyle.SetFontUnderlined(false);
-    commentStyle.SetFontWeight(wxFONTWEIGHT_NORMAL);
-    commentStyle.SetTextColour(wxColour(39, 165, 60, wxALPHA_OPAQUE));
-
-    wxRichTextAttr NAGsStyle;
-    NAGsStyle.SetFontUnderlined(false);
-    NAGsStyle.SetFontWeight(wxFONTWEIGHT_NORMAL);
-    NAGsStyle.SetTextColour(wxColour(228, 0, 0, wxALPHA_OPAQUE));
-
-    BeginStyle(baseStyle);
+    BeginStyle(styles[BASE]);
 
     int depth = 0;
 
@@ -175,7 +171,7 @@ void GameTxtCtrl::WriteGame()
             // Begin variant
             Newline();
             BeginLeftIndent(30 * pos.RAVdepth);
-            BeginStyle(variantStyle);
+            BeginStyle(styles[VARIANT]);
             WriteText("(");
         } else if (pos.RAVdepth < depth) {
             // End variant
@@ -199,13 +195,13 @@ void GameTxtCtrl::WriteGame()
         movesRange->push_back(range);
 
         if (pos.NAGs.Len()) {
-            BeginStyle(NAGsStyle);
+            BeginStyle(styles[NAGS]);
             WriteText(pos.NAGs);
             EndStyle();
         }
 
         if (pos.comment.Len()) {
-            BeginStyle(commentStyle);
+            BeginStyle(styles[COMMENT]);
             WriteText(" ");
             WriteText(pos.comment);
             EndStyle();
