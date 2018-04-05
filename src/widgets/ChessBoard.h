@@ -17,7 +17,7 @@
 
 #include <wx/event.h>
 
-wxDECLARE_EVENT(EVT_CAN_DROP_PIECE, wxCommandEvent);
+wxDECLARE_EVENT(EVT_DROP_PIECE, wxCommandEvent);
 
 class ChessBoardPiece
 {

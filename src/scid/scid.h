@@ -39,6 +39,16 @@ private:
 
 namespace scid {
 
+    enum piece_type {
+        INVALID_PIECE = 0,
+        KING,
+        QUEEN,
+        ROOK,
+        BISHOP,
+        KNIGHT,
+        PAWN
+    };
+
     struct game_entry
     {
         std::string result;
@@ -78,12 +88,29 @@ namespace scid {
     };
 
     void init();
+
     void close();
+
+    int base_getClipBaseHandle();
+
     int base_open(std::string file);
+
     std::string base_filename(int db_handle);
+
     unsigned int base_numgames(int db_handle);
+
     void base_gameslist(int baseHandle, const char* ordering, const char* filterId, unsigned int start, unsigned int count, std::map<unsigned int, game_entry>* map);
+
     void base_getGame(int db_handle, unsigned int entry_index, std::vector<game_posInfos> &dest);
+
+    void game_load(int db_handle, unsigned int gnum);
+
+    //
+    // Return the list of legal moves in SAN notation
+    //
+    void pos_moves(int db_handle, std::vector<std::string> &dest);
+
+    bool move_add(int db_handle, unsigned int sq1, unsigned int sq2, unsigned int promo);
 }
 
 #endif /* SCID_H */

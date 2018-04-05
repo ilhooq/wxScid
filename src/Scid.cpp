@@ -12,6 +12,7 @@
 #include "Scid.h"
 
 #include "events.h"
+#include "widgets/ChessBoard.h"
 #include "widgets/GamesListCtrl.h"
 
 static std::map<unsigned int, scid::game_entry> entriesMap;
@@ -23,16 +24,18 @@ bool static mapEntryExists(long item)
 }
 
 
-BEGIN_EVENT_TABLE(Scid, wxEvtHandler) EVT_COMMAND (wxID_ANY, EVT_OPEN_DATABASE_REQUEST, Scid::openDatabase)
-EVT_LIST_CACHE_HINT(wxID_ANY, Scid::OnGamesListCacheHint)
-EVT_LIST_ITEM_ACTIVATED (wxID_ANY, Scid::OnListItemActivated)
-EVT_COMMAND (wxID_ANY, EVT_DISPLAY_LIST_CELL, Scid::OnListDisplayCell)
+BEGIN_EVENT_TABLE(Scid, wxEvtHandler)
+    EVT_COMMAND (wxID_ANY, EVT_OPEN_DATABASE_REQUEST, Scid::openDatabase)
+    EVT_LIST_CACHE_HINT(wxID_ANY, Scid::OnGamesListCacheHint)
+    EVT_LIST_ITEM_ACTIVATED (wxID_ANY, Scid::OnListItemActivated)
+    EVT_COMMAND (wxID_ANY, EVT_DISPLAY_LIST_CELL, Scid::OnListDisplayCell)
+    EVT_COMMAND (wxID_ANY, EVT_DROP_PIECE, Scid::OnDropPiece)
 END_EVENT_TABLE()
 
 Scid::Scid()
 {
     scid::init();
-    currentDbHandle = 0;
+    currentDbHandle = scid::base_getClipBaseHandle();
     gameLoaded = new wxVector<GamePos>;
 }
 
@@ -129,6 +132,8 @@ void Scid::OnListDisplayCell(wxCommandEvent& evt)
 
 void Scid::LoadGame(unsigned int entryIndex)
 {
+    scid::game_load(currentDbHandle, entryIndex);
+
     std::vector<scid::game_posInfos> dest;
     scid::base_getGame(currentDbHandle, entryIndex, dest);
 
@@ -158,4 +163,11 @@ void Scid::LoadGame(unsigned int entryIndex)
     event.SetEventObject(this);
     event.SetClientData(gameLoaded);
     ProcessEvent(event);
+}
+
+void Scid::OnDropPiece(wxCommandEvent& evt)
+{
+    PieceMove *move = (PieceMove *) evt.GetClientData();
+    // Todo: Manage promotion
+    move->canDrop = scid::move_add(currentDbHandle, move->from, move->to, 0);
 }

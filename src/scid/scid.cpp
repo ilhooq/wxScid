@@ -24,6 +24,11 @@ namespace scid {
         DBasePool::closeAll();
     }
 
+    int base_getClipBaseHandle()
+    {
+        return DBasePool::getClipBase();
+    }
+
     int base_open(std::string file)
     {
         ICodecDatabase::Codec codec = ICodecDatabase::Codec::MEMORY;
@@ -214,6 +219,94 @@ namespace scid {
 
             dest.push_back(pos);
         }
+    }
+
+    void game_load(int db_handle, unsigned int gnum)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+
+        if (!db->inUse) {
+            throw scid_error("Database was not openned.", ERROR_FileNotOpen);
+        }
+
+        db->gameAlterations.clear();
+
+        // Check the game number is valid
+        if (gnum < 0  ||  gnum > db->numGames()) {
+            throw scid_error("Invalid game number.", ERROR_BadArg);
+        }
+
+        const char * corruptMsg = "Sorry, this game appears to be corrupt.";
+
+        const IndexEntry* ie = db->getIndexEntry(gnum);
+
+        if (db->getGame(ie, db->bbuf) != OK) {
+            throw scid_error(corruptMsg, ERROR_Corrupt);
+        }
+
+        if (db->game->Decode(db->bbuf, GAME_DECODE_ALL) != OK) {
+            throw scid_error(corruptMsg, ERROR_Corrupt);
+        }
+
+        if (db->dbFilter->Get(gnum) > 0) {
+            db->game->MoveToPly(db->dbFilter->Get(gnum) - 1);
+        } else {
+            db->game->MoveToPly(0);
+        }
+
+        db->game->LoadStandardTags(ie, db->getNameBase());
+        db->gameNumber = gnum;
+        db->gameAltered = false;
+    }
+
+    void pos_moves(int db_handle, std::vector<std::string> &dest)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+        Position * p = db->game->GetCurrentPos();
+        sanListT sanList;
+
+        p->CalcSANStrings(&sanList, SAN_NO_CHECKTEST);
+
+        for (uint i=0; i < sanList.num; i++) {
+            dest.push_back(sanList.list[i]);
+        }
+    }
+
+    bool move_add(int db_handle, unsigned int sq1, unsigned int sq2, unsigned int promo)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+
+        if (promo == 0) { promo = EMPTY; }
+
+        char s[8];
+        s[0] = square_FyleChar(sq1);
+        s[1] = square_RankChar(sq1);
+        s[2] = square_FyleChar(sq2);
+        s[3] = square_RankChar(sq2);
+
+        if (promo == EMPTY) {
+            s[4] = 0;
+        } else {
+            s[4] = piece_Char(promo);
+            s[5] = 0;
+        }
+
+        simpleMoveT sm;
+
+        Position * pos = db->game->GetCurrentPos();
+
+        errorT err = pos->ReadCoordMove(&sm, s, s[4] == 0 ? 4 : 5, true);
+
+        if (err == OK) {
+            err = db->game->AddMove(&sm);
+
+            if (err == OK) {
+                db->gameAltered = true;
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
