@@ -25,15 +25,11 @@ currentMove(1)
 
 void GameTxtCtrl::Next()
 {
-    //currentMove++;
-    //highLightCurrentMove();
     PlayMove(currentMove+1);
 }
 
 void GameTxtCtrl::Prev()
 {
-    //currentMove--;
-    //highLightCurrentMove();
     PlayMove(currentMove-1);
 }
 
@@ -50,10 +46,10 @@ void GameTxtCtrl::OnKeyDown(wxKeyEvent& evt)
 
     switch (code) {
     case WXK_LEFT:
-        wxPrintf(wxT("Key left pressed\n"));
+        PlayMove(currentMove-1);
         break;
     case WXK_RIGHT:
-        wxPrintf(wxT("Key right pressed\n"));
+        PlayMove(currentMove+1);
         break;
     }
 }
@@ -119,15 +115,6 @@ void GameTxtCtrl::OnURL(wxTextUrlEvent& evt)
 {
     int moveIdx = wxAtoi(evt.GetString());
     PlayMove(moveIdx);
-    /*
-    GamePos pos = game->at(moveIdx);
-
-    wxWindow *win = (wxWindow*) this;
-    wxCommandEvent event(EVT_MAKE_MOVE);
-    event.SetEventObject(this);
-    event.SetClientData(&pos);
-    win->ProcessWindowEvent(event);
-    */
 }
 
 void GameTxtCtrl::WriteGame()
