@@ -2950,7 +2950,7 @@ Position::DumpLatexBoard (DString * dstr, bool flip)
 // Position::Compare():
 //      Compare another position with this one.
 //
-sint
+int
 Position::Compare (Position * p)
 {
     int i = 32;
