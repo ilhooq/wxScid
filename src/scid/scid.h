@@ -101,6 +101,9 @@ namespace scid {
 
     void base_gameslist(int baseHandle, const char* ordering, const char* filterId, unsigned int start, unsigned int count, std::map<unsigned int, game_entry>* map);
 
+    // Get the loaded game
+    void base_getGame(int db_handle, std::vector<game_posInfos> &dest);
+
     void base_getGame(int db_handle, unsigned int entry_index, std::vector<game_posInfos> &dest);
 
     void game_load(int db_handle, unsigned int gnum);

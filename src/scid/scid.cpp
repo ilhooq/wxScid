@@ -190,6 +190,35 @@ namespace scid {
         delete[] idxList;
     }
 
+    void base_getGame(int db_handle, std::vector<game_posInfos> &dest)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+
+        db->game->MoveToStart();
+
+        do {
+            if (db->game->AtVarStart() && !db->game->AtStart())
+                continue;
+
+            dest.emplace_back();
+            game_posInfos pos = dest.back();
+            pos.RAVdepth = db->game->GetVarLevel();
+            pos.RAVnum = db->game->GetVarNumber();
+            char strBuf[256];
+            db->game->currentPos()->PrintFEN(strBuf, FEN_ALL_FIELDS);
+            pos.FEN = strBuf;
+
+            for (byte* nag = db->game->GetNags(); *nag; nag++) {
+                pos.NAGs.push_back(*nag);
+            }
+
+            pos.comment = db->game->GetMoveComment();
+            db->game->GetPrevSAN(strBuf);
+            pos.lastMoveSAN = strBuf;
+
+        } while (db->game->MoveForwardInPGN() == OK);
+    }
+
     void base_getGame(int db_handle, unsigned int entry_index, std::vector<game_posInfos> &dest)
     {
         scidBaseT* db = DBasePool::getBase(db_handle);
