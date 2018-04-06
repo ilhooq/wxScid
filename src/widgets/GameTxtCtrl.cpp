@@ -2,7 +2,6 @@
  * GameTxtCtrl.cpp
  *
  */
-#include <wx/dcbuffer.h>
 
 #include "GameTxtCtrl.h"
 #include "events.h"
@@ -11,7 +10,6 @@ BEGIN_EVENT_TABLE(GameTxtCtrl, wxRichTextCtrl)
 EVT_COMMAND (wxID_ANY, EVT_GAME_LOADED, GameTxtCtrl::OnGameLoaded)
 EVT_KEY_DOWN(GameTxtCtrl::OnKeyDown)
 EVT_TEXT_URL(wxID_ANY, GameTxtCtrl::OnURL)
-// EVT_MOTION(GameTxtCtrl::OnMouseMove)
 END_EVENT_TABLE()
 
 GameTxtCtrl::GameTxtCtrl(wxWindow* parent, wxWindowID id, const wxPoint &pos, const wxSize &size) :
@@ -20,7 +18,6 @@ currentMove(1)
 {
     game = NULL;
     movesRange = new wxVector<wxRichTextRange>;
-    // oldLinkHoverObject = NULL;
 
     styles[BASE].SetFontUnderlined(false);
     styles[BASE].SetFontWeight(wxFONTWEIGHT_BOLD);
@@ -53,7 +50,6 @@ void GameTxtCtrl::Prev()
 void GameTxtCtrl::OnGameLoaded(wxCommandEvent& evt)
 {
     game = (wxVector<GamePos> *) evt.GetClientData();
-    // oldLinkHoverObject = NULL;
     WriteGame();
 }
 
@@ -70,63 +66,6 @@ void GameTxtCtrl::OnKeyDown(wxKeyEvent& evt)
         break;
     }
 }
-
-/*** To Have onMouse over effect on links ***/
-
-/*
-void GameTxtCtrl::OnMouseMove(wxMouseEvent& event)
-{
-    wxWindow *win = (wxWindow*) this;
-
-    wxClientDC dc(this);
-    PrepareDC(dc);
-
-    dc.SetFont(win->GetFont());
-
-    long position = 0;
-    wxPoint logicalPt = event.GetLogicalPosition(dc);
-    wxRichTextObject* hitObj = NULL;
-    wxRichTextObject* contextObj = NULL;
-
-    int flags = 0;
-
-    wxRichTextParagraphLayoutBox* container = & GetBuffer();
-    wxRichTextDrawingContext context(& GetBuffer());
-
-    int hit = container->HitTest(dc, context, GetUnscaledPoint(logicalPt), position, & hitObj, & contextObj, flags);
-
-    // See if we need to change the cursor and the font underlined
-
-    if (oldLinkHoverObject != NULL && hitObj != oldLinkHoverObject) {
-        wxRichTextAttr oldAttr = oldLinkHoverObject->GetAttributes();
-
-        if (oldAttr.GetFontUnderlined()) {
-            oldAttr.SetFontUnderlined(false);
-            SetStyle(oldLinkHoverObject, oldAttr);
-        }
-    }
-
-    if (hit != wxRICHTEXT_HITTEST_NONE && !(hit & wxRICHTEXT_HITTEST_OUTSIDE) && hitObj)
-    {
-        wxRichTextParagraphLayoutBox* actualContainer = wxDynamicCast(contextObj, wxRichTextParagraphLayoutBox);
-        if (actualContainer) {
-            wxRichTextAttr attr = hitObj->GetAttributes();
-            if (attr.HasFlag(wxTEXT_ATTR_URL) && !attr.GetFontUnderlined()) {
-                attr.SetFontUnderlined(true);
-                SetStyle(hitObj, attr);
-                oldLinkHoverObject = hitObj;
-            }
-
-            ProcessMouseMovement(actualContainer, hitObj, position, logicalPt);
-        }
-    }
-    else {
-        win->SetCursor(m_textCursor);
-    }
-
-    event.Skip();
-}
-*/
 
 void GameTxtCtrl::OnURL(wxTextUrlEvent& evt)
 {
@@ -181,7 +120,6 @@ void GameTxtCtrl::WriteGame()
             EndLeftIndent();
             depth--;
         }
-
 
         wxString url;
         BeginURL(url << i);
@@ -244,6 +182,3 @@ void GameTxtCtrl::PlayMove(int move)
         win->ProcessWindowEvent(event);
     }
 }
-
-
-
