@@ -9,7 +9,7 @@
 #include <wx/richtext/richtextctrl.h>
 #include <wx/vector.h>
 
-wxDECLARE_EVENT(EVT_LOAD_MOVE, wxCommandEvent);
+wxDECLARE_EVENT(EVT_MOVE_TO_POSITION, wxCommandEvent);
 
 class GameTxtCtrl: public wxRichTextCtrl
 {

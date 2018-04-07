@@ -5,7 +5,7 @@
 
 #include "GameTxtCtrl.h"
 
-wxDEFINE_EVENT(EVT_LOAD_MOVE, wxCommandEvent);
+wxDEFINE_EVENT(EVT_MOVE_TO_POSITION, wxCommandEvent);
 
 BEGIN_EVENT_TABLE(GameTxtCtrl, wxRichTextCtrl)
     EVT_KEY_DOWN(GameTxtCtrl::OnKeyDown)
@@ -167,7 +167,7 @@ void GameTxtCtrl::PlayMove(int move)
 {
     ActivateMove(move);
     wxWindow *win = (wxWindow*) this;
-    wxCommandEvent event(EVT_LOAD_MOVE);
+    wxCommandEvent event(EVT_MOVE_TO_POSITION);
     event.SetEventObject(this);
     event.SetInt(move);
     win->ProcessWindowEvent(event);

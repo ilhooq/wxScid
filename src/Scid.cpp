@@ -28,7 +28,7 @@ BEGIN_EVENT_TABLE(Scid, wxEvtHandler)
     EVT_LIST_ITEM_ACTIVATED (wxID_ANY, Scid::OnListItemActivated)
     EVT_COMMAND (wxID_ANY, EVT_DISPLAY_LIST_CELL, Scid::OnListDisplayCell)
     EVT_COMMAND (wxID_ANY, EVT_DROP_PIECE, Scid::OnDropPiece)
-    EVT_COMMAND (wxID_ANY, EVT_LOAD_MOVE, Scid::OnLoadMove)
+    EVT_COMMAND (wxID_ANY, EVT_MOVE_TO_POSITION, Scid::OnMoveToPosition)
 END_EVENT_TABLE()
 
 Scid::Scid()
@@ -173,7 +173,7 @@ void Scid::OnDropPiece(wxCommandEvent& evt)
     move->canDrop = scid::move_add(currentDbHandle, move->from, move->to, 0);
 }
 
-void Scid::OnLoadMove(wxCommandEvent& evt)
+void Scid::OnMoveToPosition(wxCommandEvent& evt)
 {
     ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(MainFrame::ID_CHESSBOARD);
     int move = evt.GetInt();

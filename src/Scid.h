@@ -26,7 +26,7 @@ private:
     void OnListDisplayCell(wxCommandEvent& evt);
     void OnGamesListCacheHint(wxListEvent &event);
     void OnDropPiece(wxCommandEvent& evt);
-    void OnLoadMove(wxCommandEvent& evt);
+    void OnMoveToPosition(wxCommandEvent& evt);
 
     wxDECLARE_EVENT_TABLE();
 };
