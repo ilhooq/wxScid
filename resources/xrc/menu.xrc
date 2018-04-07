@@ -10,7 +10,7 @@
     <object class="wxMenuItem" name="new_database">
       <label>_New database</label>
     </object>
-    <object class="wxMenuItem" name="open_database">
+    <object class="wxMenuItem" name="ID_OPEN_DATABASE">
       <label>_Open database\tCtrl-O</label>
     </object>
 

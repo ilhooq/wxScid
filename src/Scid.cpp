@@ -4,7 +4,9 @@
  */
 #include <vector>
 #include <map>
+#include <wx/filedlg.h>
 #include <wx/filename.h>
+#include <wx/xrc/xmlres.h>
 
 #include "scid/scid.h"
 #include "Scid.h"
@@ -21,9 +23,8 @@ bool static mapEntryExists(long item)
     return (it != entriesMap.end());
 }
 
-
 BEGIN_EVENT_TABLE(Scid, wxEvtHandler)
-    EVT_COMMAND (wxID_ANY, EVT_OPEN_DATABASE_REQUEST, Scid::openDatabase)
+    EVT_MENU(XRCID("ID_OPEN_DATABASE"), Scid::OnOpenDatabase)
     EVT_LIST_CACHE_HINT(wxID_ANY, Scid::OnGamesListCacheHint)
     EVT_LIST_ITEM_ACTIVATED (wxID_ANY, Scid::OnListItemActivated)
     EVT_COMMAND (wxID_ANY, EVT_DISPLAY_LIST_CELL, Scid::OnListDisplayCell)
@@ -42,25 +43,37 @@ Scid::~Scid()
     scid::close();
 }
 
-void Scid::openDatabase(wxCommandEvent& evt)
+void Scid::OnOpenDatabase(wxCommandEvent& evt)
 {
-    wxString path = evt.GetString();
-    currentDbHandle = scid::base_open((std::string) path.c_str());
+    MainFrame * mainFrame = (MainFrame *) wxWindow::FindWindowById(MainFrame::ID);
 
-    DbInfos infos;
-    infos.handle = currentDbHandle;
-    infos.numGames = scid::base_numgames(currentDbHandle);
-    infos.path = path;
+    wxFileDialog* OpenDialog = new wxFileDialog (
+        mainFrame,
+        _("Choose a database to open"),
+        wxEmptyString,
+        wxEmptyString,
+        _("Database files (*.si4, *.pgn)|*.si4;*.pgn"),
+        wxFD_OPEN,
+        wxDefaultPosition
+    );
 
-    wxFileName fname((wxString) scid::base_filename(currentDbHandle));
-    infos.name = fname.GetName();
+    if (OpenDialog->ShowModal() == wxID_OK) {
 
-    wxCommandEvent event(EVT_OPEN_DATABASE, wxID_ANY);
-    event.SetEventObject(this);
-    event.SetClientData(&infos);
-    ProcessEvent(event);
+        wxString path = OpenDialog->GetPath();
+        currentDbHandle = scid::base_open((std::string) path.c_str());
+
+        unsigned int numGames = scid::base_numgames(currentDbHandle);
+        wxFileName fname((wxString) scid::base_filename(currentDbHandle));
+        wxString name = fname.GetName();
+
+        // Set the Title to reflect the file open
+        mainFrame->SetTitle(wxString::Format(wxT("WxScid - %s (%d games)"), name, numGames));
+        GamesListCtrl * listCtrl = (GamesListCtrl *) wxWindow::FindWindowById(MainFrame::ID_GAMES_LIST_VIEW);
+        listCtrl->SetItemCount(numGames);
+    }
+
+    OpenDialog->Destroy();
 }
-
 
 // Called on double click or when pressed ENTER on a row
 void Scid::OnListItemActivated(wxListEvent &event)

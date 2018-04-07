@@ -21,7 +21,7 @@ private:
     int currentDbHandle;
 
     void LoadGame(unsigned int entryIndex);
-    void openDatabase(wxCommandEvent& evt);
+    void OnOpenDatabase(wxCommandEvent& evt);
     void OnListItemActivated(wxListEvent &event);
     void OnListDisplayCell(wxCommandEvent& evt);
     void OnGamesListCacheHint(wxListEvent &event);

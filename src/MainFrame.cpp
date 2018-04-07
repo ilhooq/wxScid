@@ -14,9 +14,6 @@
 #include "App.h"
 #include "MainFrame.h"
 
-wxDEFINE_EVENT(EVT_OPEN_DATABASE_REQUEST, wxCommandEvent);
-wxDEFINE_EVENT(EVT_OPEN_DATABASE, wxCommandEvent);
-
 MainFrame::MainFrame(wxWindow* parent,
                      wxWindowID id,
                      const wxString& title,
@@ -35,10 +32,7 @@ wxFrame(parent, id, title, pos, size, style)
 
     // Binds events dynamically
     Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OnExit, this, wxID_EXIT);
-    Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OnOpenDatabaseDialog, this, XRCID("open_database"));
     Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::flipBoard, this, MainFrame::ID_FLIPBOARD);
-
-    Bind(EVT_OPEN_DATABASE, &MainFrame::OnOpenDatabase, this);
 
     // Tell wxAuiManager to manage this frame
     auiManager.SetManagedWindow(this);
@@ -179,39 +173,6 @@ void MainFrame::OnMouseWheelOnBoard(wxMouseEvent& evt)
         // Down
         textCtrl->Next();
     }
-}
-
-void MainFrame::OnOpenDatabaseDialog(wxCommandEvent& WXUNUSED(evt))
-{
-    wxFileDialog* OpenDialog = new wxFileDialog (
-        this,
-        _("Choose a database to open"),
-        wxEmptyString,
-        wxEmptyString,
-        _("Database files (*.si4, *.pgn)|*.si4;*.pgn"),
-        wxFD_OPEN,
-        wxDefaultPosition
-    );
-
-    if (OpenDialog->ShowModal() == wxID_OK) {
-
-        wxString path = OpenDialog->GetPath();
-        wxCommandEvent evt(EVT_OPEN_DATABASE_REQUEST, wxID_ANY);
-        evt.SetEventObject(this);
-        evt.SetString(path);
-        ProcessWindowEvent(evt);
-    }
-
-    OpenDialog->Destroy();
-}
-
-void MainFrame::OnOpenDatabase(wxCommandEvent& evt)
-{
-    DbInfos *infos = (DbInfos*) evt.GetClientData();
-    // Set the Title to reflect the file open
-    SetTitle(wxString::Format(wxT("WxScid - %s (%d games)"), infos->name, infos->numGames));
-    GamesListCtrl * listCtrl = (GamesListCtrl *) wxWindow::FindWindowById(ID_GAMES_LIST_VIEW);
-    listCtrl->SetItemCount(infos->numGames);
 }
 
 void MainFrame::OnExit(wxCommandEvent &WXUNUSED(evt))
