@@ -4,19 +4,18 @@
  */
 
 #include "GameTxtCtrl.h"
-#include "events.h"
+
+wxDEFINE_EVENT(EVT_LOAD_MOVE, wxCommandEvent);
 
 BEGIN_EVENT_TABLE(GameTxtCtrl, wxRichTextCtrl)
-EVT_COMMAND (wxID_ANY, EVT_GAME_LOADED, GameTxtCtrl::OnGameLoaded)
-EVT_KEY_DOWN(GameTxtCtrl::OnKeyDown)
-EVT_TEXT_URL(wxID_ANY, GameTxtCtrl::OnURL)
+    EVT_KEY_DOWN(GameTxtCtrl::OnKeyDown)
+    EVT_TEXT_URL(wxID_ANY, GameTxtCtrl::OnURL)
 END_EVENT_TABLE()
 
 GameTxtCtrl::GameTxtCtrl(wxWindow* parent, wxWindowID id, const wxPoint &pos, const wxSize &size) :
 wxRichTextCtrl(parent, id, "", pos, size, wxBORDER_NONE | wxWANTS_CHARS | wxRE_MULTILINE | wxRE_READONLY),
-currentMove(1)
+currentMove(0)
 {
-    game = NULL;
     movesRange = new wxVector<wxRichTextRange>;
 
     styles[BASE].SetFontUnderlined(false);
@@ -47,12 +46,6 @@ void GameTxtCtrl::Prev()
     PlayMove(currentMove-1);
 }
 
-void GameTxtCtrl::OnGameLoaded(wxCommandEvent& evt)
-{
-    game = (wxVector<GamePos> *) evt.GetClientData();
-    WriteGame();
-}
-
 void GameTxtCtrl::OnKeyDown(wxKeyEvent& evt)
 {
     long code = evt.GetKeyCode();
@@ -73,7 +66,7 @@ void GameTxtCtrl::OnURL(wxTextUrlEvent& evt)
     PlayMove(moveIdx);
 }
 
-void GameTxtCtrl::WriteGame()
+void GameTxtCtrl::WriteGame(wxVector<GamePos> &game)
 {
     Clear();
     if (!movesRange->empty()) {
@@ -97,11 +90,11 @@ void GameTxtCtrl::WriteGame()
 
     int depth = 0;
 
-    for (it = game->begin(); it != game->end(); it++, i++) {
+    for (it = game.begin(); it != game.end(); it++, i++) {
 
         GamePos pos = *it;
 
-        if (it != game->begin()) {
+        if (it != game.begin()) {
             WriteText(" ");
         }
 
@@ -149,8 +142,6 @@ void GameTxtCtrl::WriteGame()
     EndStyle();
     EndSuppressUndo();
     win->Thaw();
-
-    highLightMove(currentMove, true);
 }
 
 void GameTxtCtrl::highLightMove(int move, bool activate)
@@ -165,20 +156,19 @@ void GameTxtCtrl::highLightMove(int move, bool activate)
     }
 }
 
+void GameTxtCtrl::ActivateMove(int move)
+{
+    highLightMove(currentMove, false);
+    currentMove = move;
+    highLightMove(currentMove, true);
+}
+
 void GameTxtCtrl::PlayMove(int move)
 {
-    if (move > 0 && move < game->size()) {
-
-        highLightMove(currentMove, false);
-        currentMove = move;
-        highLightMove(currentMove, true);
-
-        GamePos pos = game->at(currentMove);
-
-        wxWindow *win = (wxWindow*) this;
-        wxCommandEvent event(EVT_MAKE_MOVE);
-        event.SetEventObject(this);
-        event.SetClientData(&pos);
-        win->ProcessWindowEvent(event);
-    }
+    ActivateMove(move);
+    wxWindow *win = (wxWindow*) this;
+    wxCommandEvent event(EVT_LOAD_MOVE);
+    event.SetEventObject(this);
+    event.SetInt(move);
+    win->ProcessWindowEvent(event);
 }

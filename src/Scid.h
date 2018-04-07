@@ -22,7 +22,7 @@ public:
 
 private:
     int currentDbHandle;
-    wxVector<GamePos> *gameLoaded;
+    // wxVector<GamePos> *gameLoaded;
 
     void LoadGame(unsigned int entryIndex);
     void openDatabase(wxCommandEvent& evt);
@@ -30,6 +30,7 @@ private:
     void OnListDisplayCell(wxCommandEvent& evt);
     void OnGamesListCacheHint(wxListEvent &event);
     void OnDropPiece(wxCommandEvent& evt);
+    void OnLoadMove(wxCommandEvent& evt);
 
     wxDECLARE_EVENT_TABLE();
 };

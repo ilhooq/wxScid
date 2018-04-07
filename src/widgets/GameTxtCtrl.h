@@ -8,7 +8,8 @@
 
 #include <wx/richtext/richtextctrl.h>
 #include <wx/vector.h>
-#include "database.h"
+
+wxDECLARE_EVENT(EVT_LOAD_MOVE, wxCommandEvent);
 
 class GameTxtCtrl: public wxRichTextCtrl
 {
@@ -20,6 +21,16 @@ public:
         NAGS
     };
 
+    struct GamePos
+    {
+        int RAVdepth;
+        int RAVnum;
+        wxString FEN;
+        wxString NAGs;
+        wxString comment;
+        wxString lastMoveSAN;
+    };
+
     GameTxtCtrl(wxWindow* parent,
                 wxWindowID id = wxID_ANY,
                 const wxPoint& point = wxDefaultPosition,
@@ -28,20 +39,19 @@ public:
     {
     }
 
+    void WriteGame(wxVector<GamePos> &game);
+    void ActivateMove(int move);
+    void PlayMove(int move);
     void Next();
     void Prev();
 
 private:
-    wxVector<GamePos> *game;
     wxVector<wxRichTextRange> *movesRange;
     wxRichTextAttr styles[4];
     int currentMove;
-    void OnGameLoaded(wxCommandEvent& evt);
     void OnKeyDown(wxKeyEvent& evt);
     void OnURL(wxTextUrlEvent& evt);
-    void WriteGame();
     void highLightMove(int move, bool activate);
-    void PlayMove(int move);
 
 wxDECLARE_EVENT_TABLE();
 };

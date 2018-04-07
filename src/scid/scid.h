@@ -114,6 +114,11 @@ namespace scid {
     void pos_moves(int db_handle, std::vector<std::string> &dest);
 
     bool move_add(int db_handle, unsigned int sq1, unsigned int sq2, unsigned int promo);
+
+    // Forward to a move in the loaded game
+    void move_to(int db_handle, unsigned int move);
+
+    std::string pos_fen(int db_handle);
 }
 
 #endif /* SCID_H */

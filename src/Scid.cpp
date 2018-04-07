@@ -12,8 +12,10 @@
 #include "Scid.h"
 
 #include "events.h"
+#include "MainFrame.h"
 #include "widgets/ChessBoard.h"
 #include "widgets/GamesListCtrl.h"
+#include "widgets/GameTxtCtrl.h"
 
 static std::map<unsigned int, scid::game_entry> entriesMap;
 
@@ -30,13 +32,14 @@ BEGIN_EVENT_TABLE(Scid, wxEvtHandler)
     EVT_LIST_ITEM_ACTIVATED (wxID_ANY, Scid::OnListItemActivated)
     EVT_COMMAND (wxID_ANY, EVT_DISPLAY_LIST_CELL, Scid::OnListDisplayCell)
     EVT_COMMAND (wxID_ANY, EVT_DROP_PIECE, Scid::OnDropPiece)
+    EVT_COMMAND (wxID_ANY, EVT_LOAD_MOVE, Scid::OnLoadMove)
 END_EVENT_TABLE()
 
 Scid::Scid()
 {
     scid::init();
     currentDbHandle = scid::base_getClipBaseHandle();
-    gameLoaded = new wxVector<GamePos>;
+    // gameLoaded = new wxVector<GamePos>;
 }
 
 Scid::~Scid()
@@ -137,16 +140,20 @@ void Scid::LoadGame(unsigned int entryIndex)
     std::vector<scid::game_posInfos> dest;
     scid::base_getGame(currentDbHandle, entryIndex, dest);
 
+    /*
     if (!gameLoaded->empty())
     {
         gameLoaded->clear();
     }
+    */
+
+    wxVector<GameTxtCtrl::GamePos> game;
 
     std::vector<scid::game_posInfos>::iterator it;
 
     for (it = dest.begin(); it != dest.end(); it++) {
         scid::game_posInfos ScidPos = *it;
-        GamePos pos;
+        GameTxtCtrl::GamePos pos;
         pos.RAVdepth = ScidPos.RAVdepth;
         pos.RAVnum = ScidPos.RAVnum;
         pos.NAGs = ScidPos.NAGs;
@@ -156,13 +163,24 @@ void Scid::LoadGame(unsigned int entryIndex)
         pos.comment.Replace(wxT("\r"), wxT(""));
         pos.lastMoveSAN = ScidPos.lastMoveSAN;
 
-        gameLoaded->push_back(pos);
+        game.push_back(pos);
     }
 
-    wxCommandEvent event(EVT_GAME_LOADED, wxID_ANY);
-    event.SetEventObject(this);
-    event.SetClientData(gameLoaded);
-    ProcessEvent(event);
+    GameTxtCtrl * textCtrl = (GameTxtCtrl *) wxWindow::FindWindowById(MainFrame::ID_CTRL_GAME_TXT);
+    ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(MainFrame::ID_CHESSBOARD);
+
+    if (game.size() > 0) {
+        // Load First postion of the game
+        GameTxtCtrl::GamePos pos = game.at(0);
+        chessboard->LoadPositionFromFen(pos.FEN);
+    }
+
+    textCtrl->WriteGame(game);
+
+    // wxCommandEvent event(EVT_GAME_LOADED, wxID_ANY);
+    // event.SetEventObject(this);
+    // event.SetClientData(gameLoaded);
+    // ProcessEvent(event);
 }
 
 void Scid::OnDropPiece(wxCommandEvent& evt)
@@ -170,4 +188,12 @@ void Scid::OnDropPiece(wxCommandEvent& evt)
     PieceMove *move = (PieceMove *) evt.GetClientData();
     // Todo: Manage promotion
     move->canDrop = scid::move_add(currentDbHandle, move->from, move->to, 0);
+}
+
+void Scid::OnLoadMove(wxCommandEvent& evt)
+{
+    ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(MainFrame::ID_CHESSBOARD);
+    int move = evt.GetInt();
+    scid::move_to(currentDbHandle, move);
+    chessboard->LoadPositionFromFen(scid::pos_fen(currentDbHandle));
 }

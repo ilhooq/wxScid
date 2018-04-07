@@ -201,20 +201,22 @@ namespace scid {
                 continue;
 
             dest.emplace_back();
-            game_posInfos pos = dest.back();
+            game_posInfos &pos = dest.back();
+            // game_posInfos pos;
             pos.RAVdepth = db->game->GetVarLevel();
             pos.RAVnum = db->game->GetVarNumber();
             char strBuf[256];
             db->game->currentPos()->PrintFEN(strBuf, FEN_ALL_FIELDS);
             pos.FEN = strBuf;
 
-            for (byte* nag = db->game->GetNags(); *nag; nag++) {
-                pos.NAGs.push_back(*nag);
-            }
+            // for (byte* nag = db->game->GetNags(); *nag; nag++) {
+            //    pos.NAGs.push_back(*nag);
+            // }
 
             pos.comment = db->game->GetMoveComment();
             db->game->GetPrevSAN(strBuf);
             pos.lastMoveSAN = strBuf;
+            // dest.push_back(pos);
 
         } while (db->game->MoveForwardInPGN() == OK);
     }
@@ -336,6 +338,32 @@ namespace scid {
         }
 
         return false;
+    }
+
+    void move_to(int db_handle, unsigned int move)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+        db->game->MoveToStart();
+        int i = 0;
+
+        do {
+
+            if (db->game->AtVarStart() && !db->game->AtStart())
+                continue;
+
+            if (i == move) break;
+
+            i++;
+
+        } while (db->game->MoveForwardInPGN() == OK);
+    }
+
+    std::string pos_fen(int db_handle)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+        char boardStr[200];
+        db->game->GetCurrentPos()->PrintFEN(boardStr, FEN_ALL_FIELDS);
+        return (std::string) boardStr;
     }
 }
 
