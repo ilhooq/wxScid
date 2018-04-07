@@ -11,10 +11,11 @@
 #include "widgets/ChessBoard.h"
 #include "widgets/GamesListCtrl.h"
 #include "widgets/GameTxtCtrl.h"
-#include "database.h"
-#include "events.h"
 #include "App.h"
 #include "MainFrame.h"
+
+wxDEFINE_EVENT(EVT_OPEN_DATABASE_REQUEST, wxCommandEvent);
+wxDEFINE_EVENT(EVT_OPEN_DATABASE, wxCommandEvent);
 
 MainFrame::MainFrame(wxWindow* parent,
                      wxWindowID id,
@@ -38,8 +39,6 @@ wxFrame(parent, id, title, pos, size, style)
     Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::flipBoard, this, MainFrame::ID_FLIPBOARD);
 
     Bind(EVT_OPEN_DATABASE, &MainFrame::OnOpenDatabase, this);
-    Bind(EVT_GAME_LOADED, &MainFrame::OnGameLoaded, this);
-    Bind(EVT_MAKE_MOVE, &MainFrame::OnMakeMove, this);
 
     // Tell wxAuiManager to manage this frame
     auiManager.SetManagedWindow(this);
@@ -166,29 +165,6 @@ wxFrame(parent, id, title, pos, size, style)
 
     // "Commit" all changes made to wxAuiManager
     auiManager.Update();
-}
-
-void MainFrame::OnGameLoaded(wxCommandEvent& evt)
-{
-    wxWindow * textCtrl = (wxWindow *) wxWindow::FindWindowById(ID_CTRL_GAME_TXT);
-    ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(ID_CHESSBOARD);
-
-    wxVector<GamePos> * game = (wxVector<GamePos> *) evt.GetClientData();
-
-    if (game->size() > 0) {
-        // Load First postion of the game
-        GamePos pos = game->at(0);
-        chessboard->LoadPositionFromFen(pos.FEN);
-    }
-
-    textCtrl->ProcessWindowEvent(evt);
-}
-
-void MainFrame::OnMakeMove(wxCommandEvent& evt)
-{
-    ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(ID_CHESSBOARD);
-    GamePos *pos = (GamePos*) evt.GetClientData();
-    chessboard->LoadPositionFromFen(pos->FEN);
 }
 
 void MainFrame::OnMouseWheelOnBoard(wxMouseEvent& evt)

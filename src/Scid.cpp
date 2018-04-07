@@ -7,11 +7,7 @@
 #include <wx/filename.h>
 
 #include "scid/scid.h"
-
-#include "database.h"
 #include "Scid.h"
-
-#include "events.h"
 #include "MainFrame.h"
 #include "widgets/ChessBoard.h"
 #include "widgets/GamesListCtrl.h"
@@ -39,7 +35,6 @@ Scid::Scid()
 {
     scid::init();
     currentDbHandle = scid::base_getClipBaseHandle();
-    // gameLoaded = new wxVector<GamePos>;
 }
 
 Scid::~Scid()
@@ -140,13 +135,6 @@ void Scid::LoadGame(unsigned int entryIndex)
     std::vector<scid::game_posInfos> dest;
     scid::base_getGame(currentDbHandle, entryIndex, dest);
 
-    /*
-    if (!gameLoaded->empty())
-    {
-        gameLoaded->clear();
-    }
-    */
-
     wxVector<GameTxtCtrl::GamePos> game;
 
     std::vector<scid::game_posInfos>::iterator it;
@@ -176,11 +164,6 @@ void Scid::LoadGame(unsigned int entryIndex)
     }
 
     textCtrl->WriteGame(game);
-
-    // wxCommandEvent event(EVT_GAME_LOADED, wxID_ANY);
-    // event.SetEventObject(this);
-    // event.SetClientData(gameLoaded);
-    // ProcessEvent(event);
 }
 
 void Scid::OnDropPiece(wxCommandEvent& evt)

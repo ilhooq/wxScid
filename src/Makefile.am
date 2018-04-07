@@ -8,7 +8,6 @@ wxscid_SOURCES= \
 	App.cpp \
 	MainFrame.cpp \
 	Scid.cpp \
-	events.cpp \
 	widgets/ChessBoard.cpp \
 	widgets/GamesListCtrl.cpp \
 	widgets/GameTxtCtrl.cpp

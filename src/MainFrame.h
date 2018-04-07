@@ -10,6 +10,17 @@
 #include <wx/frame.h>
 #include "widgets/ChessBoard.h"
 
+wxDECLARE_EVENT(EVT_OPEN_DATABASE_REQUEST, wxCommandEvent);
+wxDECLARE_EVENT(EVT_OPEN_DATABASE, wxCommandEvent);
+
+struct DbInfos
+{
+    wxString name;
+    wxString path;
+    int handle;
+    int numGames;
+};
+
 class MainFrame: public wxFrame
 {
 public:

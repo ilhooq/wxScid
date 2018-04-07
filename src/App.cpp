@@ -8,7 +8,6 @@
 #include <wx/stdpaths.h>
 
 #include "App.h"
-#include "database.h"
 #include "MainFrame.h"
 #include "Scid.h"
 
