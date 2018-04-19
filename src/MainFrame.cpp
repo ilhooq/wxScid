@@ -177,8 +177,11 @@ void MainFrame::OnMouseWheelOnBoard(wxMouseEvent& evt)
 
 void MainFrame::OnExit(wxCommandEvent &WXUNUSED(evt))
 {
-    // true is to force the frame to close.
-    Close(true);
+    /*
+     * The application normally shuts down when
+     * the last of its top level windows is closed.
+     */
+    Close(true); // true is to force the frame to close.
 }
 
 void MainFrame::flipBoard(wxCommandEvent &WXUNUSED(evt))
