@@ -46,19 +46,6 @@ wxFrame(parent, id, title, pos, size, style)
     artProvider->SetMetric(wxAUI_DOCKART_GRADIENT_TYPE, wxAUI_GRADIENT_NONE);
 
     // Toolbar
-    // prepare a few custom overflow elements for the toolbars' overflow buttons
-    wxAuiToolBarItemArray prepend_items;
-    wxAuiToolBarItemArray append_items;
-    wxAuiToolBarItem item;
-
-    item.SetKind(wxITEM_SEPARATOR);
-    append_items.Add(item);
-
-    item.SetKind(wxITEM_NORMAL);
-    item.SetId(ID_CustomizeToolbar);
-    item.SetLabel(_("Customize..."));
-    append_items.Add(item);
-
     wxAuiToolBar* toolbar = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
             wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW | wxAUI_TB_HORIZONTAL);
     toolbar->SetToolBitmapSize(wxSize(48, 48));
@@ -78,7 +65,6 @@ wxFrame(parent, id, title, pos, size, style)
     toolbar->AddTool(ID_Toolbar + 13, wxT("Test"), toolbar_bmp1);
     toolbar->AddTool(ID_Toolbar + 14, wxT("Test"), toolbar_bmp1);
     toolbar->AddTool(ID_Toolbar + 15, wxT("Test"), toolbar_bmp1);
-    toolbar->SetCustomOverflowItems(prepend_items, append_items);
     toolbar->Realize();
 
     auiManager.AddPane(toolbar, wxAuiPaneInfo()
