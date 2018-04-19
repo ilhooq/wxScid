@@ -13,21 +13,6 @@
 class MainFrame: public wxFrame
 {
 public:
-    enum
-    {
-        ID = wxID_HIGHEST + 1, // Mainframe id
-        ID_Settings,
-        ID_CustomizeToolbar,
-        ID_Toolbar,
-        ID_FLIPBOARD,
-        ID_CHESSBOARD,
-        ID_GAMES_LIST_VIEW,
-        ID_CTRL_GAME_TXT,
-        ID_CreatePerspective,
-        ID_CopyPerspectiveCode,
-        ID_FirstPerspective = ID_CreatePerspective + 1000
-    };
-
     MainFrame(wxWindow* parent,
               wxWindowID id,
               const wxString& title,

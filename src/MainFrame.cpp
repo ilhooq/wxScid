@@ -32,7 +32,7 @@ wxFrame(parent, id, title, pos, size, style)
 
     // Binds events dynamically
     Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OnExit, this, wxID_EXIT);
-    Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::flipBoard, this, MainFrame::ID_FLIPBOARD);
+    Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::flipBoard, this, ID_CMD_FLIPBOARD);
 
     // Tell wxAuiManager to manage this frame
     auiManager.SetManagedWindow(this);
@@ -46,25 +46,25 @@ wxFrame(parent, id, title, pos, size, style)
     artProvider->SetMetric(wxAUI_DOCKART_GRADIENT_TYPE, wxAUI_GRADIENT_NONE);
 
     // Toolbar
-    wxAuiToolBar* toolbar = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+    wxAuiToolBar* toolbar = new wxAuiToolBar(this, ID_TOOLBAR, wxDefaultPosition, wxDefaultSize,
             wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW | wxAUI_TB_HORIZONTAL);
     toolbar->SetToolBitmapSize(wxSize(48, 48));
 
     wxBitmap toolbar_bmp1 = wxArtProvider::GetBitmap(wxART_QUESTION, wxART_OTHER, wxSize(16, 16));
     wxBitmap flip_bmp = wxImage(dataDir + "/icons/flip.png");
 
-    toolbar->AddTool(ID_Toolbar + 1, wxT("Disabled"), toolbar_bmp1);
-    toolbar->AddTool(ID_FLIPBOARD, wxT("Flip board"), flip_bmp);
-    toolbar->AddTool(ID_Toolbar + 8, wxT("Test"), toolbar_bmp1);
-    toolbar->AddTool(ID_Toolbar + 9, wxT("Test"), toolbar_bmp1);
+    toolbar->AddTool(ID_TOOLBAR + 1, wxT("Disabled"), toolbar_bmp1);
+    toolbar->AddTool(ID_CMD_FLIPBOARD, wxT("Flip board"), flip_bmp);
+    toolbar->AddTool(ID_TOOLBAR + 8, wxT("Test"), toolbar_bmp1);
+    toolbar->AddTool(ID_TOOLBAR + 9, wxT("Test"), toolbar_bmp1);
     toolbar->AddSeparator();
-    toolbar->AddTool(ID_Toolbar + 10, wxT("Test"), toolbar_bmp1);
-    toolbar->AddTool(ID_Toolbar + 11, wxT("Test"), toolbar_bmp1);
+    toolbar->AddTool(ID_TOOLBAR + 10, wxT("Test"), toolbar_bmp1);
+    toolbar->AddTool(ID_TOOLBAR + 11, wxT("Test"), toolbar_bmp1);
     toolbar->AddSeparator();
-    toolbar->AddTool(ID_Toolbar + 12, wxT("Test"), toolbar_bmp1);
-    toolbar->AddTool(ID_Toolbar + 13, wxT("Test"), toolbar_bmp1);
-    toolbar->AddTool(ID_Toolbar + 14, wxT("Test"), toolbar_bmp1);
-    toolbar->AddTool(ID_Toolbar + 15, wxT("Test"), toolbar_bmp1);
+    toolbar->AddTool(ID_TOOLBAR + 12, wxT("Test"), toolbar_bmp1);
+    toolbar->AddTool(ID_TOOLBAR + 13, wxT("Test"), toolbar_bmp1);
+    toolbar->AddTool(ID_TOOLBAR + 14, wxT("Test"), toolbar_bmp1);
+    toolbar->AddTool(ID_TOOLBAR + 15, wxT("Test"), toolbar_bmp1);
     toolbar->Realize();
 
     auiManager.AddPane(toolbar, wxAuiPaneInfo()
@@ -118,7 +118,7 @@ wxFrame(parent, id, title, pos, size, style)
         .MinSize(wxSize(300,200))
     );
 
-    GameTxtCtrl *txtCtrl = new GameTxtCtrl(gameViewer, ID_CTRL_GAME_TXT);
+    GameTxtCtrl *txtCtrl = new GameTxtCtrl(gameViewer, ID_GAMETEXT);
 
     wxSizer *txtSizer = new wxBoxSizer(wxHORIZONTAL);
     txtSizer->Add(txtCtrl, 1, wxEXPAND);
@@ -137,7 +137,7 @@ wxFrame(parent, id, title, pos, size, style)
         .MinimizeButton(true)
     );
 
-    GamesListCtrl* listCtrl = new GamesListCtrl(gamesList, ID_GAMES_LIST_VIEW);
+    GamesListCtrl* listCtrl = new GamesListCtrl(gamesList, ID_GAMESLIST);
 
     wxSizer *listSizer = new wxBoxSizer(wxHORIZONTAL);
     listSizer->Add(listCtrl, 1, wxEXPAND);
@@ -149,7 +149,7 @@ wxFrame(parent, id, title, pos, size, style)
 
 void MainFrame::OnMouseWheelOnBoard(wxMouseEvent& evt)
 {
-    GameTxtCtrl * textCtrl = (GameTxtCtrl *) wxWindow::FindWindowById(ID_CTRL_GAME_TXT);
+    GameTxtCtrl * textCtrl = (GameTxtCtrl *) wxWindow::FindWindowById(ID_GAMETEXT);
 
     int rot = evt.GetWheelRotation();
     if (rot > 0) {

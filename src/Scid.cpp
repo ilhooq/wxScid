@@ -9,6 +9,7 @@
 #include <wx/xrc/xmlres.h>
 
 #include "scid/scid.h"
+#include "App.h"
 #include "Scid.h"
 #include "MainFrame.h"
 #include "widgets/ChessBoard.h"
@@ -45,7 +46,7 @@ Scid::~Scid()
 
 void Scid::OnOpenDatabase(wxCommandEvent& evt)
 {
-    MainFrame * mainFrame = (MainFrame *) wxWindow::FindWindowById(MainFrame::ID);
+    MainFrame * mainFrame = (MainFrame *) wxWindow::FindWindowById(ID_MAINFRAME);
 
     wxFileDialog* OpenDialog = new wxFileDialog (
         mainFrame,
@@ -68,7 +69,7 @@ void Scid::OnOpenDatabase(wxCommandEvent& evt)
 
         // Set the Title to reflect the file open
         mainFrame->SetTitle(wxString::Format(wxT("WxScid - %s (%d games)"), name, numGames));
-        GamesListCtrl * listCtrl = (GamesListCtrl *) wxWindow::FindWindowById(MainFrame::ID_GAMES_LIST_VIEW);
+        GamesListCtrl * listCtrl = (GamesListCtrl *) wxWindow::FindWindowById(ID_GAMESLIST);
         listCtrl->SetItemCount(numGames);
     }
 
@@ -167,8 +168,8 @@ void Scid::LoadGame(unsigned int entryIndex)
         game.push_back(pos);
     }
 
-    GameTxtCtrl * textCtrl = (GameTxtCtrl *) wxWindow::FindWindowById(MainFrame::ID_CTRL_GAME_TXT);
-    ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(MainFrame::ID_CHESSBOARD);
+    GameTxtCtrl * textCtrl = (GameTxtCtrl *) wxWindow::FindWindowById(ID_GAMETEXT);
+    ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(ID_CHESSBOARD);
 
     if (game.size() > 0) {
         // Load First postion of the game
@@ -188,7 +189,7 @@ void Scid::OnDropPiece(wxCommandEvent& evt)
 
 void Scid::OnMoveToPosition(wxCommandEvent& evt)
 {
-    ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(MainFrame::ID_CHESSBOARD);
+    ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(ID_CHESSBOARD);
     int move = evt.GetInt();
     scid::move_to(currentDbHandle, move);
     chessboard->LoadPositionFromFen(scid::pos_fen(currentDbHandle));

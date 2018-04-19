@@ -26,7 +26,7 @@ bool App::OnInit()
         return false;
     }
 
-    frame = new MainFrame(NULL, MainFrame::ID, _T("WxScid"));
+    frame = new MainFrame(NULL, ID_MAINFRAME, _T("WxScid"));
     frame->Show(true);
 
     frame->PushEventHandler(new Scid);
