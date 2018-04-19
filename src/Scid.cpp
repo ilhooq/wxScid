@@ -26,6 +26,7 @@ bool static mapEntryExists(long item)
 
 BEGIN_EVENT_TABLE(Scid, wxEvtHandler)
     EVT_MENU(XRCID("ID_OPEN_DATABASE"), Scid::OnOpenDatabase)
+    EVT_MENU(ID_CMD_FLIPBOARD, Scid::OnCmdFlipBoard)
     EVT_LIST_CACHE_HINT(wxID_ANY, Scid::OnGamesListCacheHint)
     EVT_LIST_ITEM_ACTIVATED (wxID_ANY, Scid::OnListItemActivated)
     EVT_COMMAND (wxID_ANY, EVT_DISPLAY_LIST_CELL, Scid::OnListDisplayCell)
@@ -193,4 +194,10 @@ void Scid::OnMoveToPosition(wxCommandEvent& evt)
     int move = evt.GetInt();
     scid::move_to(currentDbHandle, move);
     chessboard->LoadPositionFromFen(scid::pos_fen(currentDbHandle));
+}
+
+void Scid::OnCmdFlipBoard(wxCommandEvent &evt)
+{
+    ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(ID_CHESSBOARD);
+    chessboard->Flip();
 }

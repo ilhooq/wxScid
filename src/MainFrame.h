@@ -22,8 +22,6 @@ public:
 
     ~MainFrame();
 
-    void flipBoard(wxCommandEvent & WXUNUSED(evt));
-
 private:
     wxAuiManager auiManager;
     void OnExit(wxCommandEvent& evt);

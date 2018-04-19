@@ -32,7 +32,6 @@ wxFrame(parent, id, title, pos, size, style)
 
     // Binds events dynamically
     Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::OnExit, this, wxID_EXIT);
-    Bind(wxEVT_COMMAND_MENU_SELECTED, &MainFrame::flipBoard, this, ID_CMD_FLIPBOARD);
 
     // Tell wxAuiManager to manage this frame
     auiManager.SetManagedWindow(this);
@@ -168,11 +167,6 @@ void MainFrame::OnExit(wxCommandEvent &WXUNUSED(evt))
      * the last of its top level windows is closed.
      */
     Close(true); // true is to force the frame to close.
-}
-
-void MainFrame::flipBoard(wxCommandEvent &WXUNUSED(evt))
-{
-    board->Flip();
 }
 
 MainFrame::~MainFrame()
