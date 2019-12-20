@@ -62,3 +62,20 @@ CXXFLAGS="-std=c++11" ./autogen.sh \
 --with-wx-config=${MXE_PATH}/usr/i686-w64-mingw32.static/bin/wx-config
 ```
 
+## Compilation with docker
+
+```bash
+# Build image
+docker build -t wxscid-builder .
+
+# Run and Build container
+docker run -ti --name wxcidbuilder -v "$PWD":/home/ilhooq/wxScid wxscid-builder bash
+
+# Start container
+docker start wxcidbuilder
+
+# Connect to container
+docker exec -ti wxcidbuilder bash
+
+```
+
