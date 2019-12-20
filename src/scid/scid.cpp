@@ -290,6 +290,110 @@ namespace scid {
         db->gameAltered = false;
     }
 
+    void game_moves(int db_handle, unsigned int gnum, std::vector<std::string> &dest)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+
+        if (gnum > 0) {
+
+            if (! db->inUse) {
+                throw scid_error("This database is not in use.");
+            }
+
+            if (gnum > db->numGames()) {
+                throw scid_error("Invalid game number.");
+            }
+
+            const IndexEntry* ie = db->getIndexEntry(gnum);
+
+            if (db->getGame(ie, db->bbuf) != OK) {
+                throw scid_error("Error loading game.");
+            }
+
+            db->game->Clear();
+
+            if (db->game->Decode (db->bbuf, GAME_DECODE_NONE) != OK) {
+                throw scid_error("Error decoding game.");
+            }
+
+            db->game->LoadStandardTags(ie, db->getNameBase());
+        }
+
+        // Here, a list of the boards or moves is requested:
+        auto location = db->game->currentLocation();
+
+        db->game->MoveToPly(0);
+
+        while (1) {
+
+            colorT toMove = db->game->GetCurrentPos()->GetToMove();
+            uint moveCount = db->game->GetCurrentPos()->GetFullMoveCount();
+            char san [20];
+            db->game->GetSAN(san);
+
+            if (san[0] != 0) {
+
+                char temp[40];
+
+                if (toMove == WHITE) {
+                    sprintf (temp, "%u.%s", moveCount, san);
+                } else {
+                    strCopy (temp, san);
+                }
+
+                byte * nags = db->game->GetNextNags();
+
+                if (*nags != 0) {
+                    for (uint nagCount = 0 ; nags[nagCount] != 0; nagCount++) {
+                        char nagstr[20];
+                        game_printNag (nags[nagCount], nagstr, true, PGN_FORMAT_Plain);
+                        if (nagCount > 0  ||
+                              (nagstr[0] != '!' && nagstr[0] != '?')) {
+                            strAppend (temp, " ");
+                        }
+                        strAppend (temp, nagstr);
+                    }
+                }
+                dest.push_back((std::string) temp);
+            } else {
+                dest.push_back((std::string) (char *)RESULT_LONGSTR[db->game->GetResult()]);
+            }
+
+            if (db->game->MoveForward() != OK) {
+                break;
+            }
+        }
+
+        db->game->restoreLocation(location);
+    }
+
+    std::string game_pgn(int db_handle, unsigned int gnum)
+    {
+        game_load(db_handle, gnum);
+
+        scidBaseT* db = DBasePool::getBase(db_handle);
+
+        Game * g = db->game;
+        uint lineWidth = 99999;
+        g->ResetPgnStyle();
+        g->SetPgnFormat (PGN_FORMAT_Plain);
+        g->AddPgnStyle (PGN_STYLE_TAGS | PGN_STYLE_COMMENTS | PGN_STYLE_VARS);
+        // g->AddPgnStyle (PGN_STYLE_COLUMN);
+        g->AddPgnStyle (PGN_STYLE_INDENT_VARS);
+        g->AddPgnStyle (PGN_STYLE_COMMENTS);
+        g->AddPgnStyle (PGN_STYLE_SHORT_HEADER);
+        std::pair<const char*, unsigned> pgnBuf = g->WriteToPGN(lineWidth);
+
+        char *pgnStr = new char[pgnBuf.second];
+
+        // std::string $pgn = (std::string) pgnBuf.first;
+        std::string $pgn = (std::string) pgnStr;
+
+        delete pgnStr;
+
+        return $pgn ;
+    }
+
     void pos_moves(int db_handle, std::vector<std::string> &dest)
     {
         scidBaseT* db = DBasePool::getBase(db_handle);
@@ -301,6 +405,34 @@ namespace scid {
         for (uint i=0; i < sanList.num; i++) {
             dest.push_back(sanList.list[i]);
         }
+    }
+
+    bool pos_canMove(int db_handle, unsigned int sq1, unsigned int sq2, unsigned int promo)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+
+        if (promo == 0) { promo = EMPTY; }
+
+        char s[8];
+        s[0] = square_FyleChar(sq1);
+        s[1] = square_RankChar(sq1);
+        s[2] = square_FyleChar(sq2);
+        s[3] = square_RankChar(sq2);
+
+        if (promo == EMPTY) {
+            s[4] = 0;
+        } else {
+            s[4] = piece_Char(promo);
+            s[5] = 0;
+        }
+
+        simpleMoveT sm;
+
+        Position * pos = db->game->GetCurrentPos();
+
+        errorT err = pos->ReadCoordMove(&sm, s, s[4] == 0 ? 4 : 5, true);
+
+        return (err == OK)? true : false;
     }
 
     bool move_add(int db_handle, unsigned int sq1, unsigned int sq2, unsigned int promo)
@@ -356,6 +488,106 @@ namespace scid {
             i++;
 
         } while (db->game->MoveForwardInPGN() == OK);
+    }
+
+    bool move_edge(int db_handle, move_egdes edge)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+
+        switch (edge) {
+            case AT_START:
+                return db->game->AtStart();
+            case AT_END:
+                return db->game->AtEnd();
+            case AT_VAR_START:
+                 return db->game->AtVarStart();
+            case AT_VAR_END:
+                 return db->game->AtVarEnd();
+        }
+
+        return false;
+    }
+
+    int move_back(int db_handle, int count)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+
+        unsigned int numMovesTakenBack = 0;
+
+        for (int i = 0; i < count; i++) {
+
+            if (db->game->MoveBackup() != OK) {
+                break;
+            }
+
+            numMovesTakenBack++;
+        }
+
+        return numMovesTakenBack;
+    }
+
+    int move_forward(int db_handle, int count)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+
+        unsigned int numMovesMade = 0;
+
+        for (int i = 0; i < count; i++) {
+
+            if (db->game->MoveForward() != OK) {
+                break;
+            }
+
+            numMovesMade++;
+        }
+
+        return numMovesMade;
+    }
+
+    bool move_isEqual(int db_handle, unsigned int from, unsigned int to, unsigned int promo)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+
+        if (db->game->AtEnd()) {
+            db->game->MoveBackup();
+        }
+
+        simpleMoveT* move = db->game->GetCurrentMove();
+
+        if (promo == 0) { promo = EMPTY; }
+
+        bool test1 = move->from == from;
+        bool test2 = move->to == to;
+        bool test3 = move->promote == promo;
+
+        if (move->from == from && move->to == to && move->promote == promo ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    void move_addVariation(int db_handle)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+
+        if (! (db->game->AtVarStart() && db->game->AtVarEnd())) {
+            db->game->MoveForward();
+            db->game->AddVariation();
+            db->gameAltered = true;
+         }
+    }
+
+    void move_exitVariation(int db_handle)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+        db->game->MoveExitVariation();
+    }
+
+    int move_getPosition(int db_handle)
+    {
+        scidBaseT* db = DBasePool::getBase(db_handle);
+        return db->game->GetLocationInPGN();
     }
 
     std::string pos_fen(int db_handle)

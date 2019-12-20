@@ -147,7 +147,26 @@ void Scid::LoadGame(unsigned int entryIndex)
 {
     scid::game_load(currentDbHandle, entryIndex);
 
+    /*
+    std::vector<std::string> dest1;
+
+    scid::game_moves(currentDbHandle, entryIndex, dest1);
+    std::vector<std::string>::iterator it1;
+
+    for (it1 = dest1.begin(); it1 != dest1.end(); it1++) {
+        // scid::game_posInfos ScidPos = *it;
+        wxPrintf("%s ", *it1);
+    }
+    wxPrintf("\n ");
+    */
+
+
+    std::string pgn = scid::game_pgn(currentDbHandle, entryIndex);
+    wxPrintf("%s\n ", (wxString) pgn);
+
+
     std::vector<scid::game_posInfos> dest;
+
     scid::base_getGame(currentDbHandle, entryIndex, dest);
 
     wxVector<GameTxtCtrl::GamePos> game;
@@ -181,17 +200,72 @@ void Scid::LoadGame(unsigned int entryIndex)
     textCtrl->WriteGame(game);
 }
 
+static int movePosition = 0;
+
 void Scid::OnDropPiece(wxCommandEvent& evt)
 {
     PieceMove *move = (PieceMove *) evt.GetClientData();
     // Todo: Manage promotion
-    move->canDrop = scid::move_add(currentDbHandle, move->from, move->to, 0);
+    int promo = 0;
+
+    move->canDrop = scid::pos_canMove(currentDbHandle, move->from, move->to, promo);
+
+    if (move->canDrop) {
+        movePosition++;
+
+        if (scid::move_edge(currentDbHandle, scid::AT_END) || scid::move_edge(currentDbHandle, scid::AT_VAR_END)) {
+            scid::move_add(currentDbHandle, move->from, move->to, 0);
+        } else {
+
+            scid::move_forward(currentDbHandle);
+
+            if (!scid::move_isEqual(currentDbHandle, move->from, move->to, promo)) {
+
+                scid::move_addVariation(currentDbHandle);
+                scid::move_add(currentDbHandle, move->from, move->to, 0);
+                // scid::move_exitVariation(currentDbHandle);
+                movePosition++;
+
+            }
+        }
+
+        // int position = scid::move_getPosition(currentDbHandle);
+
+        wxPrintf("movePosition after OnDropPiece: %d\n", movePosition);
+
+        std::vector<scid::game_posInfos> dest;
+        scid::base_getGame(currentDbHandle, dest);
+        wxVector<GameTxtCtrl::GamePos> game;
+
+        std::vector<scid::game_posInfos>::iterator it;
+
+        for (it = dest.begin(); it != dest.end(); it++) {
+            scid::game_posInfos ScidPos = *it;
+            GameTxtCtrl::GamePos pos;
+            pos.RAVdepth = ScidPos.RAVdepth;
+            pos.RAVnum = ScidPos.RAVnum;
+            pos.NAGs = ScidPos.NAGs;
+            pos.FEN = ScidPos.FEN;
+            pos.comment = wxString::FromUTF8(ScidPos.comment.c_str());
+            pos.comment.Replace(wxT("\n"), wxT(" "));
+            pos.comment.Replace(wxT("\r"), wxT(""));
+            pos.lastMoveSAN = ScidPos.lastMoveSAN;
+
+            game.push_back(pos);
+        }
+
+        GameTxtCtrl * textCtrl = (GameTxtCtrl *) wxWindow::FindWindowById(ID_GAMETEXT);
+        textCtrl->WriteGame(game);
+        textCtrl->ActivateMove(movePosition);
+    }
 }
 
 void Scid::OnMoveToPosition(wxCommandEvent& evt)
 {
     ChessBoard * chessboard = (ChessBoard *) wxWindow::FindWindowById(ID_CHESSBOARD);
     int move = evt.GetInt();
+    movePosition = move;
+    wxPrintf("movePosition in OnMoveToPosition: %d\n", move);
     scid::move_to(currentDbHandle, move);
     chessboard->LoadPositionFromFen(scid::pos_fen(currentDbHandle));
 }

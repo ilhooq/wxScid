@@ -12,7 +12,7 @@
 class scid_error: std::exception
 {
 public:
-    scid_error(const std::string& msg, int code) throw() :
+    scid_error(const std::string& msg, int code=0) throw() :
     m_msg(msg),
     m_code(code)
     {
@@ -47,6 +47,13 @@ namespace scid {
         BISHOP,
         KNIGHT,
         PAWN
+    };
+
+    enum move_egdes {
+        AT_START,
+        AT_END,
+        AT_VAR_START,
+        AT_VAR_END,
     };
 
     struct game_entry
@@ -108,15 +115,40 @@ namespace scid {
 
     void game_load(int db_handle, unsigned int gnum);
 
+    void game_moves(int db_handle, unsigned int gnum, std::vector<std::string> &dest);
+
+    std::string game_pgn(int db_handle, unsigned int gnum=0);
+
     //
     // Return the list of legal moves in SAN notation
     //
     void pos_moves(int db_handle, std::vector<std::string> &dest);
 
+    bool pos_canMove(int db_handle, unsigned int sq1, unsigned int sq2, unsigned int promo);
+
     bool move_add(int db_handle, unsigned int sq1, unsigned int sq2, unsigned int promo);
 
     // Forward to a move in the loaded game
     void move_to(int db_handle, unsigned int move);
+
+    // Check if move is at start or at end of the game or of a variation
+    bool move_edge(int db_handle, move_egdes edge);
+
+    int move_back(int db_handle, int count = 1);
+
+    int move_forward(int db_handle, int count = 1);
+
+    // Is the current Move is equal to the given parameters ?
+    bool move_isEqual(int db_handle, unsigned int from, unsigned int to, unsigned int promo);
+
+    // Ad a variation for the current move and moves into the variation
+    void move_addVariation(int db_handle);
+
+    // Exit the variation for the current move
+    void move_exitVariation(int db_handle);
+
+    // Get the position of the current move
+    int move_getPosition(int db_handle);
 
     std::string pos_fen(int db_handle);
 }
