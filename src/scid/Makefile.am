@@ -26,12 +26,13 @@ libscid_la_SOURCES = \
 # Linker options
 libscid_la_LIBADD  = ${PTHREAD_LIBS}
 libscid_la_LDFLAGS = \
+	$(AM_LDFLAGS) \
 	-no-undefined \
 	-release ${SCID_VERSION}
 # -export-symbols-regex ^scid_
 
 # Compiler options.
-libscid_la_CPPFLAGS = -std=c++14
+libscid_la_CPPFLAGS = $(AM_CXXFLAGS) -std=c++14
 
 MAINTAINERCLEANFILES = \
 	Makefile.in
