@@ -17,7 +17,7 @@ AC_CONFIG_MACRO_DIR([m4])
 
 dnl foreign tells to Automake that you don't want to follow GNU standard and you don't need 
 dnl mandatory documentation files: INSTALL, NEWS, README, AUTHORS, ChangeLog and COPYING
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 
 dnl Include maintainer mode targets in Makefile
 AM_MAINTAINER_MODE
@@ -38,7 +38,7 @@ WX_CONFIG_CHECK([3.0.0], [wxWin=1],,[base,core,xml,adv,xrc,aui,richtext,html],[$
 WX_DETECT_STANDARD_OPTION_VALUES
 
 # Initialize libtool
-LT_PREREQ([2.2])
+LT_PREREQ([2.4])
 LT_INIT([disable-static])
 
 # SCID code version. See https://sourceforge.net/p/scid/code/
