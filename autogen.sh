@@ -3,6 +3,10 @@
 test -n "$srcdir" || srcdir=`dirname "$0"`
 test -n "$srcdir" || srcdir=.
 
+# Get the last wxwin.m4 to build on wxWidgets GTK3 port
+mkdir m4
+curl -s -o m4/wxwin.m4 https://raw.githubusercontent.com/wxWidgets/wxWidgets/master/wxwin.m4
+
 olddir=`pwd`
 
 cd $srcdir
